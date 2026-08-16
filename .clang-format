@@ -59,7 +59,7 @@ PenaltyReturnTypeOnItsOwnLine: 1000
 QualifierAlignment: Custom
 QualifierOrder: ['static', 'inline', 'type', 'const', 'volatile', 'restrict']
 PointerAlignment: Right
-SpaceAroundPointerQualifiers: After
+SpaceAroundPointerQualifiers: Default
 
 BinPackParameters: true
 BinPackArguments: true
