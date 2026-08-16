@@ -1,4 +1,9 @@
 {
+    "name": "simple-risc-v-emulator",
+    "version": "1.0.0",
+    "description": "A simple RISC-V emulator with graphical capabilities",
+    "homepage": "https://github.com/MEROWN/simple-risc-v-emulator",
+    "license": "GPL-3.0-only",
     "dependencies": [
         "sdl3"
     ]
