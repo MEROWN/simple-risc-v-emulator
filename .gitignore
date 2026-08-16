@@ -1,3 +1,14 @@
+# Ignore all hidden files and directories
+.*
+# But not the important ones
+!.gitignore
+!.gitattributes
+!.gitkeep
+!.editorconfig
+!.clangd
+!.clang-format
+!.github/
+
 # Prerequisites
 *.d
 

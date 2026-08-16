@@ -1,0 +1,72 @@
+---
+# Config for clang-format v16+
+#
+# Put trailing commas (e.g. enum A { X, Y, Z, }) to split enum/list items
+# into separate lines:
+#     enum A {
+#         X,
+#         Y,
+#         Z,
+#     }
+#
+# If you encounter terrible formatting bugs, use:
+#     // clang-format off
+#     ...
+#     // clang-format on
+#
+# If you encounter non-terrible formatting issues, just leave them as is.
+# Automatic formatting is for saving time and not for creating masterpieces.
+
+Language: Cpp
+Standard: Latest
+
+BasedOnStyle: Chromium
+
+ColumnLimit: 100
+LineEnding: LF
+InsertNewlineAtEOF: true
+
+IndentWidth: 4
+IndentCaseLabels: false
+IndentPPDirectives: None
+
+AlignAfterOpenBracket: false
+AlignTrailingComments: false
+AlignEscapedNewlines: DontAlign
+AlignOperands: DontAlign
+
+SpaceAfterCStyleCast: true
+SpaceInEmptyBlock: true
+SpaceBeforeCpp11BracedList: true
+SpacesBeforeTrailingComments: 1
+Cpp11BracedListStyle: false
+
+MaxEmptyLinesToKeep: 2
+SeparateDefinitionBlocks: Leave
+KeepEmptyLinesAtTheStartOfBlocks: false
+
+ReflowComments: false
+
+BreakBeforeBraces: Allman
+BreakBeforeBinaryOperators: All
+BreakAfterAttributes: Always
+AlwaysBreakTemplateDeclarations: Yes
+AllowShortFunctionsOnASingleLine: None
+
+PenaltyBreakAssignment: 1000
+PenaltyReturnTypeOnItsOwnLine: 1000
+
+QualifierAlignment: Custom
+QualifierOrder: ['static', 'inline', 'type', 'const', 'volatile', 'restrict']
+PointerAlignment: Right
+SpaceAroundPointerQualifiers: After
+
+BinPackParameters: true
+BinPackArguments: true
+AllowAllParametersOfDeclarationOnNextLine: false
+AllowAllArgumentsOnNextLine: false
+
+# C++
+
+ReferenceAlignment: Left
+AccessModifierOffset: -4
