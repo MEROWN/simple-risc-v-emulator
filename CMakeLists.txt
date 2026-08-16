@@ -27,3 +27,6 @@ endif()
 
 find_package(SDL3 REQUIRED)
 target_link_libraries(riscv-emu PRIVATE SDL3::SDL3)
+
+install(TARGETS riscv-emu
+    RUNTIME DESTINATION bin)
