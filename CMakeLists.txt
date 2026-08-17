@@ -13,8 +13,9 @@ add_executable(riscv-emu)
 target_sources(riscv-emu
     PRIVATE
         "src/main.cpp"
-        "src/window.cpp"
+        "src/app.cpp"
         "src/options.cpp"
+        "src/renderer.cpp"
         "src/riscv/emulator.cpp")
 
 target_include_directories(riscv-emu
