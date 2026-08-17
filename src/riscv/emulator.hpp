@@ -8,42 +8,30 @@
 #include <vector>
 
 
-namespace emulator
+namespace riscv
 {
-
-using namespace riscv;
-
-/** ARGB32LE: ARGB 32-bit little-endian pixel format.
-    The memory layout is as follows: B, G, R, A.
-    A is in the highest byte, B is in the lowest byte.
-    This matches the endianness of RISC-V (which little-endian). */
-using Pixel = Word;
-
-struct EmulatorInfo
-{
-    Pointer freeMemorySize;
-
-    Word framebufferWidth;
-    Word framebufferHeight;
-
-    std::span<Instruction const> instructions;
-};
 
 class Emulator
 {
 public:
-    Emulator(EmulatorInfo const& info);
+    // TODO Add a way to initialize registers
+    Emulator(Program program, Size memorySize);
     ~Emulator();
 
     void run();
 
-    std::vector<Byte> memory;
+    inline std::span<Byte> getMemory()
+    {
+        return memory;
+    }
 
 private:
+    Program program;
+    std::vector<Byte> memory;
 };
 
 
-}; // namespace emulator
+}; // namespace riscv
 
 
 #endif

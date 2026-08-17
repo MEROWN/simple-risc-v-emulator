@@ -1,8 +1,8 @@
 #define SDL_MAIN_USE_CALLBACKS 1
 
 #include <src/options.hpp>
+#include <src/renderer.hpp>
 #include <src/riscv/emulator.hpp>
-#include <src/window.hpp>
 
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
@@ -12,10 +12,10 @@
 #include <memory>
 #include <vector>
 
-std::unique_ptr<Window> window;
+std::unique_ptr<Renderer> renderer;
 
 // TODO: remove this and use a raw pointer into the emulator memory instead
-std::vector<emulator::Pixel> fb;
+std::vector<Renderer::Pixel> fb;
 
 SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
 {
@@ -33,12 +33,12 @@ SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
     if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
         return SDL_APP_FAILURE;
 
-    window = std::make_unique<Window>("RISC-V Emulator", options.framebufferWidth,
+    renderer = std::make_unique<Renderer>("RISC-V Emulator", options.framebufferWidth,
         options.framebufferHeight);
 
-    window->renderEmpty();
+    renderer->clear();
 
-    fb = std::vector<emulator::Pixel>(options.framebufferWidth * options.framebufferHeight);
+    fb = std::vector<Renderer::Pixel>(options.framebufferWidth * options.framebufferHeight);
     for (size_t i = 0; i < fb.size(); ++i)
         fb[i] = 0xffff7700; // orange
 
@@ -47,7 +47,7 @@ SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
 
 SDL_AppResult SDL_AppIterate(void *)
 {
-    window->renderFramebuffer(fb);
+    renderer->renderFramebuffer(fb);
 
     return SDL_APP_CONTINUE;
 }
@@ -62,5 +62,5 @@ SDL_AppResult SDL_AppEvent(void *, SDL_Event *event)
 
 void SDL_AppQuit(void *, SDL_AppResult)
 {
-    window.reset();
+    renderer.reset();
 }

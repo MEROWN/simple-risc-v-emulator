@@ -1,9 +1,9 @@
-#include <src/window.hpp>
+#include <src/renderer.hpp>
 
 #include <stdexcept>
 
 
-Window::Window(std::string const& title, int framebufferWidth, int framebufferHeight)
+Renderer::Renderer(std::string const& title, int framebufferWidth, int framebufferHeight)
     : framebufferWidth(framebufferWidth), framebufferHeight(framebufferHeight)
 {
     window = SDL_CreateWindow(title.c_str(), framebufferWidth, framebufferHeight,
@@ -31,23 +31,23 @@ Window::Window(std::string const& title, int framebufferWidth, int framebufferHe
     SDL_SetTextureScaleMode(texture, SDL_SCALEMODE_NEAREST);
 }
 
-Window::~Window()
+Renderer::~Renderer()
 {
     SDL_DestroyTexture(texture);
     SDL_DestroyRenderer(renderer);
     SDL_DestroyWindow(window);
 }
 
-void Window::renderEmpty()
+void Renderer::clear()
 {
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
 
-void Window::renderFramebuffer(std::span<emulator::Pixel> framebuffer)
+void Renderer::renderFramebuffer(std::span<Pixel> framebuffer)
 {
-    int framebufferPitch = framebufferWidth * (int) sizeof(emulator::Pixel);
+    int framebufferPitch = framebufferWidth * (int) sizeof(Pixel);
     SDL_UpdateTexture(texture, nullptr, framebuffer.data(), framebufferPitch);
 
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
