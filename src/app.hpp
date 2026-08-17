@@ -22,7 +22,7 @@ public:
 
 private:
     Options options;
-    riscv::Program program;
+    std::vector<riscv::Instruction> program;
     Renderer renderer;
     riscv::Emulator emulator;
     std::span<Renderer::Pixel> framebuffer;

@@ -3,7 +3,6 @@
 
 
 #include <cstdint>
-#include <span>
 
 
 namespace riscv
@@ -18,7 +17,6 @@ using Pointer = uint64_t;
 using Size = Pointer;
 
 using Instruction = Word;
-using Program = std::span<Instruction const>;
 
 } // namespace riscv
 

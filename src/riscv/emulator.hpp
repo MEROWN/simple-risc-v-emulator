@@ -15,7 +15,7 @@ class Emulator
 {
 public:
     // TODO Add a way to initialize registers
-    Emulator(Program program, Size memorySize);
+    Emulator(std::span<riscv::Instruction const> program, Size memorySize);
     ~Emulator();
 
     void run();
@@ -26,7 +26,7 @@ public:
     }
 
 private:
-    Program program;
+    std::span<riscv::Instruction const> program;
     std::vector<Byte> memory;
 };
 
