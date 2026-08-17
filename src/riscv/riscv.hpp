@@ -16,8 +16,6 @@ using Doubleword = uint64_t;
 using Pointer = uint64_t;
 using Size = Pointer;
 
-using Instruction = Word;
-
 } // namespace riscv
 
 

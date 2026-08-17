@@ -9,25 +9,21 @@ static size_t getFramebufferSizeBytes(Options const& options)
 }
 
 
-static std::vector<riscv::Instruction> loadProgram(Options const& options)
+static riscv::Emulator createEmulator(Options const& options)
 {
-    std::ifstream file { options.programPath, std::ios::binary | std::ios::ate };
+    std::ifstream file { options.programPath, std::ios::binary };
 
     if (!file.is_open())
         throw std::runtime_error { "failed to open program file" };
 
-    size_t fileSize = file.tellg();
-    file.seekg(0, std::ios::beg);
+    std::vector<riscv::Byte> program {
+        std::istreambuf_iterator<char>(file),
+        std::istreambuf_iterator<char>(),
+    };
 
-    if (fileSize % sizeof(riscv::Instruction) != 0)
-        throw std::runtime_error { "program file size is not a multiple of instruction size" };
+    riscv::Size memorySize = options.freeMemorySize + getFramebufferSizeBytes(options);
 
-    size_t instructionCount = fileSize / sizeof(riscv::Instruction);
-    std::vector<riscv::Instruction> instructions(instructionCount);
-
-    file.read(reinterpret_cast<char *>(instructions.data()), (std::streamsize) fileSize);
-
-    return instructions;
+    return riscv::Emulator { program, memorySize };
 }
 
 
@@ -36,15 +32,6 @@ static Renderer createRenderer(Options const& options)
     Renderer renderer { "RISC-V Emulator", options.framebufferWidth, options.framebufferHeight };
     renderer.clear();
     return renderer;
-}
-
-
-static riscv::Emulator createEmulator(Options const& options, std::span<riscv::Instruction> program)
-{
-    riscv::Size memorySize = options.freeMemorySize + getFramebufferSizeBytes(options);
-
-    riscv::Emulator emulator { program, memorySize };
-    return emulator;
 }
 
 
@@ -60,10 +47,9 @@ static std::span<Renderer::Pixel> getFramebufferSpan(Options const& options,
 
 App::App(std::span<char *> args)
     : options { Options::parse(args) },
-      program { loadProgram(options) },
-      renderer { createRenderer(options) },
-      emulator { createEmulator(options, program) },
-      framebuffer { getFramebufferSpan(options, emulator) }
+      emulator { createEmulator(options) },
+      framebuffer { getFramebufferSpan(options, emulator) },
+      renderer { createRenderer(options) }
 {
 }
 
