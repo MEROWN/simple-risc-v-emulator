@@ -5,6 +5,7 @@
     "homepage": "https://github.com/MEROWN/simple-risc-v-emulator",
     "license": "GPL-3.0-only",
     "dependencies": [
-        "sdl3"
+        "sdl3",
+        "argparse"
     ]
 }

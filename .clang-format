@@ -3,7 +3,8 @@
 #
 # Put trailing commas (e.g. enum A { X, Y, Z, }) to split enum/list items
 # into separate lines:
-#     enum A {
+#     enum A
+#     {
 #         X,
 #         Y,
 #         Z,

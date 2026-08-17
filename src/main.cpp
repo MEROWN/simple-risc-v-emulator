@@ -1,33 +1,58 @@
-#include <iostream>
-
 #define SDL_MAIN_USE_CALLBACKS 1
+
+#include <src/options.hpp>
+#include <src/riscv/emulator.hpp>
+#include <src/window.hpp>
+
 #include <SDL3/SDL.h>
 #include <SDL3/SDL_main.h>
 
+#include <exception>
+#include <iostream>
+#include <memory>
+#include <vector>
 
-SDL_Window *window = nullptr;
+std::unique_ptr<Window> window;
 
-SDL_AppResult SDL_AppInit(void **appstate, int argc, char **argv)
+// TODO: remove this and use a raw pointer into the emulator memory instead
+std::vector<Window::Pixel> fb;
+
+SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
 {
-    if (!SDL_Init(SDL_INIT_VIDEO))
+    Options options;
+    try
     {
-        SDL_Log("SDL_Init failed: %s", SDL_GetError());
+        options = Options::parse({ argv, (size_t) argc });
+    }
+    catch (std::exception const& e)
+    {
+        std::cerr << "Invalid argument: " << e.what() << std::endl;
         return SDL_APP_FAILURE;
     }
 
-    window = SDL_CreateWindow("Simple RISC-V Emulator", 800, 600, 0);
+    if (!SDL_InitSubSystem(SDL_INIT_VIDEO))
+        return SDL_APP_FAILURE;
 
-    SDL_ShowWindow(window);
+    window = std::make_unique<Window>("RISC-V Emulator", options.framebufferWidth,
+        options.framebufferHeight);
+
+    window->renderEmpty();
+
+    fb = std::vector<Window::Pixel>(options.framebufferWidth * options.framebufferHeight);
+    for (size_t i = 0; i < fb.size(); ++i)
+        fb[i] = 0xffff7700; // orange
 
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppIterate(void *appstate)
+SDL_AppResult SDL_AppIterate(void *)
 {
+    window->renderFramebuffer(fb);
+
     return SDL_APP_CONTINUE;
 }
 
-SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
+SDL_AppResult SDL_AppEvent(void *, SDL_Event *event)
 {
     if (event->type == SDL_EVENT_QUIT)
         return SDL_APP_SUCCESS;
@@ -35,7 +60,7 @@ SDL_AppResult SDL_AppEvent(void *appstate, SDL_Event *event)
     return SDL_APP_CONTINUE;
 }
 
-void SDL_AppQuit(void *appstate, SDL_AppResult result)
+void SDL_AppQuit(void *, SDL_AppResult)
 {
-    SDL_Quit();
+    window.reset();
 }
