@@ -2,40 +2,48 @@
 #define EMULATOR_HPP
 
 
-#include <cstdint>
-#include <span>
+#include <src/riscv/riscv.hpp>
 
-namespace riscv
+#include <span>
+#include <vector>
+
+
+namespace emulator
 {
 
-using Byte = uint8_t;
-using Halfword = uint16_t;
-using Word = uint32_t;
-using Doubleword = uint64_t;
-using Pointer = uint64_t;
+using namespace riscv;
 
-using Instruction = Word;
+/** ARGB32LE: ARGB 32-bit little-endian pixel format.
+    The memory layout is as follows: B, G, R, A.
+    A is in the highest byte, B is in the lowest byte.
+    This matches the endianness of RISC-V (which little-endian). */
+using Pixel = Word;
 
 struct EmulatorInfo
 {
-    Pointer memorySize = (Pointer) 16 * 1024 * 1024; // 16 MB
+    Pointer freeMemorySize;
+
+    Word framebufferWidth;
+    Word framebufferHeight;
+
     std::span<Instruction const> instructions;
 };
 
 class Emulator
 {
+public:
     Emulator(EmulatorInfo const& info);
     ~Emulator();
 
     void run();
 
-    // TODO Add a way to read the DMA framebuffer from the memory
-    // TODO Add a way to read the main memory
-    // TODO Add a way to run on multiple cores
+    std::vector<Byte> memory;
+
+private:
 };
 
 
-}; // namespace riscv
+}; // namespace emulator
 
 
 #endif

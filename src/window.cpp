@@ -40,14 +40,14 @@ Window::~Window()
 
 void Window::renderEmpty()
 {
-    SDL_SetRenderDrawColor(renderer, 0xff, 0xff, 0xff, 0xff);
+    SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
 
-void Window::renderFramebuffer(std::span<Window::Pixel> framebuffer)
+void Window::renderFramebuffer(std::span<emulator::Pixel> framebuffer)
 {
-    int framebufferPitch = framebufferWidth * (int) sizeof(Pixel);
+    int framebufferPitch = framebufferWidth * (int) sizeof(emulator::Pixel);
     SDL_UpdateTexture(texture, nullptr, framebuffer.data(), framebufferPitch);
 
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);

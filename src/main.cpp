@@ -15,7 +15,7 @@
 std::unique_ptr<Window> window;
 
 // TODO: remove this and use a raw pointer into the emulator memory instead
-std::vector<Window::Pixel> fb;
+std::vector<emulator::Pixel> fb;
 
 SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
 {
@@ -38,7 +38,7 @@ SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
 
     window->renderEmpty();
 
-    fb = std::vector<Window::Pixel>(options.framebufferWidth * options.framebufferHeight);
+    fb = std::vector<emulator::Pixel>(options.framebufferWidth * options.framebufferHeight);
     for (size_t i = 0; i < fb.size(); ++i)
         fb[i] = 0xffff7700; // orange
 
