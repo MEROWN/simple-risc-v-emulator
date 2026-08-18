@@ -23,8 +23,10 @@ public:
 private:
     Options options;
     riscv::Emulator emulator;
-    std::span<Renderer::Pixel> framebuffer;
     Renderer renderer;
+
+    size_t getFramebufferSize();
+    std::span<Renderer::Pixel> getFramebuffer();
 };
 
 

@@ -6,8 +6,9 @@
 Renderer::Renderer(std::string const& title, int framebufferWidth, int framebufferHeight)
     : framebufferWidth { framebufferWidth }, framebufferHeight { framebufferHeight }
 {
-    window = SDL_CreateWindow(title.c_str(), framebufferWidth, framebufferHeight,
-        SDL_WINDOW_RESIZABLE);
+    window = SDL_CreateWindow(
+        title.c_str(), framebufferWidth, framebufferHeight, SDL_WINDOW_RESIZABLE
+    );
 
     if (!window)
         throw std::runtime_error { "failed to create SDL window" };
@@ -22,8 +23,13 @@ Renderer::Renderer(std::string const& title, int framebufferWidth, int framebuff
         throw std::runtime_error { "failed to create SDL renderer" };
 
     // SDL_PIXELFORMAT_BGRA32 is ARGB32LE, it does not depend on machine endianness.
-    texture = SDL_CreateTexture(renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING,
-        framebufferWidth, framebufferHeight);
+    texture = SDL_CreateTexture(
+        renderer,
+        SDL_PIXELFORMAT_BGRA32,
+        SDL_TEXTUREACCESS_STREAMING,
+        framebufferWidth,
+        framebufferHeight
+    );
 
     if (!texture)
         throw std::runtime_error { "failed to create SDL texture" };

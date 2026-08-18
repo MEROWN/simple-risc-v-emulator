@@ -2,6 +2,7 @@
 #define EMULATOR_HPP
 
 
+#include <src/riscv/instruction.hpp>
 #include <src/riscv/riscv.hpp>
 
 #include <span>
@@ -11,31 +12,52 @@
 namespace riscv
 {
 
+
 class Emulator
 {
 public:
-    // TODO Add a way to initialize CSR (constrol & status registers)
-    Emulator(std::span<Byte const> program, Size memorySize);
+    Emulator();
     ~Emulator();
 
     void run();
 
-    inline std::span<Byte> getMemory()
+    std::span<Byte> getMemory()
     {
         return memory;
     }
 
+    std::array<Register, 32> const& getRegisters()
+    {
+        return registers;
+    }
+
+    /** This may invalidate all previously acquired memory spans. */
+    void resizeMemory(Size newSize)
+    {
+        memory.resize(newSize);
+    }
+
+    /** This moves the provided instructions into the emulator. */
+    void setInstructions(std::vector<Instruction> newInstructions)
+    {
+        instructions = std::move(newInstructions);
+    }
+
+    /** This validates & decodes the provided program and loads it into the emulator. */
+    void loadInstructions(std::span<Byte const> program)
+    {
+        setInstructions(decodeInstructions(program));
+    }
+
+
 private:
-    struct Instruction;
-
-    std::span<Instruction const> instructions;
-    std::vector<Byte> memory;
-
-    static std::vector<Instruction> decodeInstructions(std::span<Byte const> program);
+    std::array<Register, 32> registers {};
+    std::vector<Instruction> instructions {};
+    std::vector<Byte> memory {};
 };
 
 
-}; // namespace riscv
+} // namespace riscv
 
 
 #endif

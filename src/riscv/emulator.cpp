@@ -1,40 +1,28 @@
 #include <src/riscv/emulator.hpp>
 
-#include <vector>
-
 
 namespace riscv
 {
 
-struct Emulator::Instruction
+
+Emulator::Emulator()
 {
-    // TODO This must contain *decoded* instruction data.
-    riscv::Word removeThis;
-};
-
-
-std::vector<Emulator::Instruction> Emulator::decodeInstructions(std::span<Byte const> program)
-{
-    std::vector<Instruction> instructions {};
-    // TODO Decode instructions
-    return instructions;
-}
-
-
-Emulator::Emulator(std::span<Byte const> program, Size memorySize)
-    : instructions { decodeInstructions(program) }, memory { std::vector<Byte>(memorySize) }
-{
-    // TODO
 }
 
 Emulator::~Emulator()
 {
-    // TODO
 }
 
 void Emulator::run()
 {
-    // TODO
+    // TODO(Danil) instruction execution loop
+
+    // Remove this code
+    memory[0] = 0x00; // This sets the top-left pixel to orange
+    memory[1] = 0x77;
+    memory[2] = 0xff;
+    memory[3] = 0xff;
 }
+
 
 } // namespace riscv

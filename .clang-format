@@ -31,7 +31,7 @@ IndentWidth: 4
 IndentCaseLabels: false
 IndentPPDirectives: None
 
-AlignAfterOpenBracket: false
+AlignAfterOpenBracket: BlockIndent
 AlignTrailingComments: false
 AlignEscapedNewlines: DontAlign
 AlignOperands: DontAlign
@@ -62,10 +62,10 @@ QualifierOrder: ['static', 'inline', 'type', 'const', 'volatile', 'restrict']
 PointerAlignment: Right
 SpaceAroundPointerQualifiers: Default
 
-BinPackParameters: true
-BinPackArguments: true
-AllowAllParametersOfDeclarationOnNextLine: false
-AllowAllArgumentsOnNextLine: false
+BinPackParameters: false
+BinPackArguments: false
+AllowAllParametersOfDeclarationOnNextLine: true
+AllowAllArgumentsOnNextLine: true
 
 # C++
 

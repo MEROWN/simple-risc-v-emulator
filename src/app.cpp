@@ -1,67 +1,58 @@
 #include <src/app.hpp>
 
+#include <src/options.hpp>
+
 #include <fstream>
 
 
-static size_t getFramebufferSizeBytes(Options const& options)
+static std::vector<riscv::Byte> readProgramFile(std::string const& path)
 {
-    return sizeof(Renderer::Pixel) * options.framebufferWidth * options.framebufferHeight;
-}
-
-
-static riscv::Emulator createEmulator(Options const& options)
-{
-    std::ifstream file { options.programPath, std::ios::binary };
+    std::ifstream file { path, std::ios::binary };
 
     if (!file.is_open())
         throw std::runtime_error { "failed to open program file" };
 
-    std::vector<riscv::Byte> program {
+    return std::vector<riscv::Byte> {
         std::istreambuf_iterator<char>(file),
         std::istreambuf_iterator<char>(),
-    };
-
-    riscv::Size memorySize = options.freeMemorySize + getFramebufferSizeBytes(options);
-
-    return riscv::Emulator { program, memorySize };
-}
-
-
-static Renderer createRenderer(Options const& options)
-{
-    Renderer renderer { "RISC-V Emulator", options.framebufferWidth, options.framebufferHeight };
-    renderer.clear();
-    return renderer;
-}
-
-
-static std::span<Renderer::Pixel> getFramebufferSpan(Options const& options,
-    riscv::Emulator& emulator)
-{
-    return std::span {
-        reinterpret_cast<Renderer::Pixel *>(emulator.getMemory().data()),
-        getFramebufferSizeBytes(options),
     };
 }
 
 
 App::App(std::span<char *> args)
     : options { Options::parse(args) },
-      emulator { createEmulator(options) },
-      framebuffer { getFramebufferSpan(options, emulator) },
-      renderer { createRenderer(options) }
+      emulator {},
+      renderer { "RISC-V Emulator", options.framebufferWidth, options.framebufferHeight }
 {
+    emulator.loadInstructions(readProgramFile(options.programPath));
+    emulator.resizeMemory(getFramebufferSize() + options.freeMemorySize);
+
+    renderer.clear();
+}
+
+
+size_t App::getFramebufferSize()
+{
+    return sizeof(Renderer::Pixel) * options.framebufferWidth * options.framebufferHeight;
+}
+
+
+std::span<Renderer::Pixel> App::getFramebuffer()
+{
+    return std::span<Renderer::Pixel> {
+        reinterpret_cast<Renderer::Pixel *>(emulator.getMemory().data()),
+        getFramebufferSize(),
+    };
 }
 
 
 void App::tick()
 {
-    renderer.renderFramebuffer(framebuffer);
+    emulator.run();
+    renderer.renderFramebuffer(getFramebuffer());
 }
 
 void App::handleKey(SDL_Keycode keyCode, bool isKeyDown)
 {
-    // TODO How to handle keys?
-    (void) keyCode;
-    (void) isKeyDown;
+    // TODO handle key events
 }

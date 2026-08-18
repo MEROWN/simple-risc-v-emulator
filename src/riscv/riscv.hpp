@@ -13,6 +13,8 @@ using Halfword = uint16_t;
 using Word = uint32_t;
 using Doubleword = uint64_t;
 
+using Register = uint64_t;
+
 using Pointer = uint64_t;
 using Size = Pointer;
 
