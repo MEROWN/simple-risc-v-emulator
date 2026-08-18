@@ -13,10 +13,56 @@ namespace riscv
 
 struct Instruction
 {
-    enum class Type
+    uint32_t immediate;
+
+    uint8_t destinationRegister;
+    uint8_t sourceRegister1;
+    uint8_t sourceRegister2;
+
+    enum class Type : uint8_t
     {
-        Add,
-        Sub,
+        LUI,
+        AUIPC,
+        JAL,
+        JALR,
+        BEQ,
+        BNE,
+        BLT,
+        BGE,
+        BLTU,
+        BGEU,
+        LB,
+        LH,
+        LW,
+        LBU,
+        LHU,
+        SB,
+        SH,
+        SW,
+        ADDI,
+        SLTI,
+        SLTIU,
+        XORI,
+        ORI,
+        ANDI,
+        SLLI,
+        SRLI,
+        SRAI,
+        ADD,
+        SUB,
+        SLL,
+        SLT,
+        SLTU,
+        XOR,
+        SRL,
+        SRA,
+        OR,
+        AND,
+        FENCE,
+        FENCETSO,
+        PAUSE,
+        ECALL,
+        EBREAK,
     } type;
 };
 

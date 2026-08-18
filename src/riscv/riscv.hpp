@@ -18,6 +18,8 @@ using Register = uint64_t;
 using Pointer = uint64_t;
 using Size = Pointer;
 
+constexpr auto registerCount = 32;
+
 } // namespace riscv
 
 

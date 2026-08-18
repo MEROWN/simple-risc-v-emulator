@@ -26,7 +26,7 @@ public:
         return memory;
     }
 
-    std::array<Register, 32> const& getRegisters()
+    std::array<Register, registerCount> const& getRegisters()
     {
         return registers;
     }
@@ -51,7 +51,7 @@ public:
 
 
 private:
-    std::array<Register, 32> registers {};
+    std::array<Register, registerCount> registers {};
     std::vector<Instruction> instructions {};
     std::vector<Byte> memory {};
 };
