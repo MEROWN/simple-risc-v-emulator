@@ -4,6 +4,7 @@
 
 #include <bit>
 #include <cstdint>
+#include <cstring>
 
 
 namespace riscv
@@ -29,7 +30,11 @@ static inline uint16_t loadU16(uint8_t const *ptr)
 {
     if constexpr (std::endian::native == std::endian::little)
     {
-        return *reinterpret_cast<uint16_t const *>(ptr);
+        // memcpy allows non-aligned memory access on architectures that don't support it.
+        // It should get optimized away for architectures that do.
+        uint16_t value;
+        std::memcpy(&value, ptr, sizeof(value));
+        return value;
     }
     else
     {
@@ -40,28 +45,40 @@ static inline uint16_t loadU16(uint8_t const *ptr)
 static inline uint32_t loadU32(uint8_t const *ptr)
 {
     if constexpr (std::endian::native == std::endian::little)
-        return *reinterpret_cast<uint32_t const *>(ptr);
+    {
+        uint32_t value;
+        std::memcpy(&value, ptr, sizeof(value));
+        return value;
+    }
     else
+    {
         return static_cast<uint32_t>(ptr[0]) | (static_cast<uint32_t>(ptr[1]) << 010)
             | (static_cast<uint32_t>(ptr[2]) << 020) | (static_cast<uint32_t>(ptr[3]) << 030);
+    }
 }
 
 static inline uint64_t loadU64(uint8_t const *ptr)
 {
     if constexpr (std::endian::native == std::endian::little)
-        return *reinterpret_cast<uint64_t const *>(ptr);
+    {
+        uint64_t value;
+        std::memcpy(&value, ptr, sizeof(value));
+        return value;
+    }
     else
+    {
         return static_cast<uint64_t>(ptr[0]) | (static_cast<uint64_t>(ptr[1]) << 010)
             | (static_cast<uint64_t>(ptr[2]) << 020) | (static_cast<uint64_t>(ptr[3]) << 030)
             | (static_cast<uint64_t>(ptr[4]) << 040) | (static_cast<uint64_t>(ptr[5]) << 050)
             | (static_cast<uint64_t>(ptr[6]) << 060) | (static_cast<uint64_t>(ptr[7]) << 070);
+    }
 }
 
 static inline void storeU16(uint8_t *ptr, uint16_t value)
 {
     if constexpr (std::endian::native == std::endian::little)
     {
-        *reinterpret_cast<uint16_t *>(ptr) = value;
+        std::memcpy(ptr, &value, sizeof(value));
     }
     else
     {
@@ -74,7 +91,7 @@ static inline void storeU32(uint8_t *ptr, uint32_t value)
 {
     if constexpr (std::endian::native == std::endian::little)
     {
-        *reinterpret_cast<uint32_t *>(ptr) = value;
+        std::memcpy(ptr, &value, sizeof(value));
     }
     else
     {
@@ -89,7 +106,7 @@ static inline void storeU64(uint8_t *ptr, uint64_t value)
 {
     if constexpr (std::endian::native == std::endian::little)
     {
-        *reinterpret_cast<uint64_t *>(ptr) = value;
+        std::memcpy(ptr, &value, sizeof(value));
     }
     else
     {
