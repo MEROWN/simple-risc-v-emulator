@@ -21,7 +21,7 @@ public:
 
     void run();
 
-    std::span<Byte> getMemory()
+    std::span<uint8_t> getMemory()
     {
         return memory;
     }
@@ -44,7 +44,7 @@ public:
     }
 
     /** This validates & decodes the provided program and loads it into the emulator. */
-    void loadInstructions(std::span<Byte const> program)
+    void loadInstructions(std::span<uint8_t const> program)
     {
         setInstructions(decodeInstructions(program));
     }
@@ -53,7 +53,7 @@ public:
 private:
     std::array<Register, registerCount> registers {};
     std::vector<Instruction> instructions {};
-    std::vector<Byte> memory {};
+    std::vector<uint8_t> memory {};
     Register programCounter = 0;
     void writeRegister(uint8_t registerIndex, Register value)
     {
