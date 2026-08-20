@@ -208,7 +208,7 @@ struct Instruction
     } type;
 };
 
-std::vector<Instruction> decodeInstructions(std::span<Byte const> program);
+std::vector<Instruction> decodeInstructions(std::span<uint8_t const> program);
 
 } // namespace riscv
 

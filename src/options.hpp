@@ -6,13 +6,15 @@
 #include <span>
 #include <string>
 
+#include <src/riscv/riscv.hpp>
+
 
 struct Options
 {
     std::string programPath;
-    int framebufferWidth;
-    int framebufferHeight;
-    uint64_t freeMemorySize;
+    uint32_t framebufferWidth;
+    uint32_t framebufferHeight;
+    riscv::Size freeMemorySize;
 
     static Options parse(std::span<char *> args);
 };

@@ -9,8 +9,8 @@
 Options Options::parse(std::span<char *> args)
 {
     std::string programPath;
-    std::vector<int> framebufferSize;
-    uint64_t freeMemorySizeKiB;
+    std::vector<int32_t> framebufferSize; // argparse does not support vector<uint32_t>
+    riscv::Size freeMemorySizeKiB;
 
     argparse::ArgumentParser parser("riscv-emu");
 
@@ -27,8 +27,8 @@ Options Options::parse(std::span<char *> args)
 
     parser.add_argument("-m", "--memory-size")
         .help("memory size (in KiB)")
-        .scan<'i', uint64_t>()
-        .default_value((uint64_t) 16 * 1024) // 16 MiB
+        .scan<'i', riscv::Size>()
+        .default_value((riscv::Size) 16 * 1024) // 16 MiB
         .store_into(freeMemorySizeKiB);
 
     parser.parse_args((int) args.size(), args.data());
@@ -41,8 +41,8 @@ Options Options::parse(std::span<char *> args)
 
     return Options {
         .programPath = std::move(programPath),
-        .framebufferWidth = framebufferSize[0],
-        .framebufferHeight = framebufferSize[1],
+        .framebufferWidth = (uint32_t) framebufferSize[0],
+        .framebufferHeight = (uint32_t) framebufferSize[1],
         .freeMemorySize = freeMemorySizeKiB * 1024,
     };
 }
