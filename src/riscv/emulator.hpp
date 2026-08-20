@@ -54,6 +54,15 @@ private:
     std::array<Register, registerCount> registers {};
     std::vector<Instruction> instructions {};
     std::vector<Byte> memory {};
+    Register programCounter = 0;
+    void writeRegister(uint8_t registerIndex, Register value)
+    {
+        if (registerIndex == 0)
+        {
+            return;
+        }
+        registers[registerIndex] = value;
+    }
 };
 
 
