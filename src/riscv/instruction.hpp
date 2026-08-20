@@ -13,11 +13,11 @@ namespace riscv
 
 struct Instruction
 {
-    uint32_t immediate;
+    uint32_t immediate = 0;
 
-    uint8_t destinationRegister;
-    uint8_t sourceRegister1;
-    uint8_t sourceRegister2;
+    uint8_t destinationRegister = 0;
+    uint8_t sourceRegister1 = 0;
+    uint8_t sourceRegister2 = 0;
 
     // This contains all RV64G instructions
     enum class Type : uint8_t
@@ -205,7 +205,7 @@ struct Instruction
         FCVTDL,
         FCVTDLU,
         FMVDX,
-    } type;
+    } type = Type::INVALID;
 };
 
 std::vector<Instruction> decodeInstructions(std::span<uint8_t const> program);

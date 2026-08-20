@@ -1,6 +1,5 @@
 #include <src/riscv/instruction.hpp>
 
-#include <map>
 #include <stdexcept>
 
 
@@ -8,13 +7,15 @@ namespace riscv
 {
 
 
-/** Returns true if the instruction encoded at given address is compressed (16-bit)
-    ot not (32-bit) */
-static bool isEncodingCompresssed(uint8_t const *instructionBytes)
+enum class InstructionFormat
 {
-    uint8_t lowestByte = instructionBytes[0];
-    return (lowestByte & 0b11) != 0b11;
-}
+    R,
+    I,
+    S,
+    B,
+    U,
+    J
+};
 
 
 /** Returns a bitmask with the specified number of bits set to 1.
@@ -45,192 +46,266 @@ static uint8_t getOpcode(uint32_t encoded)
     return static_cast<uint8_t>(getBits(encoded, 0, 6));
 }
 
-static uint8_t getOpcodeCompressed(uint16_t encoded)
-{
-    return static_cast<uint8_t>(getBits(encoded, 0, 1));
-}
 
-
-struct RInstruction
+static void decodeRFormat(uint32_t encoded, Instruction& instr, uint8_t& funct3, uint8_t& funct7)
 {
-    uint8_t funct7;
-    uint8_t funct3;
-    RegisterIndex rd;
-    RegisterIndex rs1;
-    RegisterIndex rs2;
+    funct7 = static_cast<uint8_t>(getBits(encoded, 25, 31));
+    funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14));
+    instr.destinationRegister = static_cast<RegisterIndex>(getBits(encoded, 7, 11));
+    instr.sourceRegister1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19));
+    instr.sourceRegister2 = static_cast<RegisterIndex>(getBits(encoded, 20, 24));
 };
 
-static RInstruction decodeRInstruction(uint32_t encoded)
+static void decodeIFormat(uint32_t encoded, Instruction& instr, uint8_t& funct3)
 {
-    return RInstruction {
-        .funct7 = static_cast<uint8_t>(getBits(encoded, 25, 31)),
-        .funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14)),
-        .rd = static_cast<RegisterIndex>(getBits(encoded, 7, 11)),
-        .rs1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19)),
-        .rs2 = static_cast<RegisterIndex>(getBits(encoded, 20, 24)),
-    };
+    funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14));
+    instr.destinationRegister = static_cast<RegisterIndex>(getBits(encoded, 7, 11));
+    instr.sourceRegister1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19));
+    instr.immediate = signExtend(getBits(encoded, 20, 31), 11);
 }
 
-struct IInstruction
+static void decodeSFormat(uint32_t encoded, Instruction& instr, uint8_t& funct3)
 {
-    uint8_t funct3;
-    RegisterIndex rd;
-    RegisterIndex rs1;
-    uint32_t imm;
-};
-
-static IInstruction decodeIInstruction(uint32_t encoded)
-{
-    return IInstruction {
-        .funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14)),
-        .rd = static_cast<RegisterIndex>(getBits(encoded, 7, 11)),
-        .rs1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19)),
-        .imm = signExtend(getBits(encoded, 20, 31), 11),
-    };
+    funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14));
+    instr.sourceRegister1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19));
+    instr.sourceRegister2 = static_cast<RegisterIndex>(getBits(encoded, 20, 24));
+    instr.immediate = signExtend(getBits(encoded, 7, 11) | (getBits(encoded, 25, 31) << 5), 11);
 }
 
-struct SBInstruction
+static void decodeBFormat(uint32_t encoded, Instruction& instr, uint8_t& funct3)
 {
-    uint8_t funct3;
-    RegisterIndex rs1;
-    RegisterIndex rs2;
-    uint32_t imm;
-};
-
-static SBInstruction decodeSInstruction(uint32_t encoded)
-{
-    return SBInstruction {
-        .funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14)),
-        .rs1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19)),
-        .rs2 = static_cast<RegisterIndex>(getBits(encoded, 20, 24)),
-        .imm = signExtend(getBits(encoded, 7, 11) | (getBits(encoded, 25, 31) << 5), 11),
-    };
+    funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14));
+    instr.sourceRegister1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19));
+    instr.sourceRegister2 = static_cast<RegisterIndex>(getBits(encoded, 20, 24));
+    instr.immediate = signExtend(
+        (getBits(encoded, 8, 11) << 1) | (getBits(encoded, 25, 30) << 5)
+            | (getBits(encoded, 7, 7) << 11) | (getBits(encoded, 31, 31) << 12),
+        12
+    );
 }
 
-static SBInstruction decodeBInstruction(uint32_t encoded)
+static void decodeUFormat(uint32_t encoded, Instruction& instr)
 {
-    return SBInstruction {
-        .funct3 = static_cast<uint8_t>(getBits(encoded, 12, 14)),
-        .rs1 = static_cast<RegisterIndex>(getBits(encoded, 15, 19)),
-        .rs2 = static_cast<RegisterIndex>(getBits(encoded, 20, 24)),
-        .imm = signExtend(
-            (getBits(encoded, 8, 11) << 1) | (getBits(encoded, 25, 30) << 5)
-                | (getBits(encoded, 7, 7) << 11) | (getBits(encoded, 31, 31) << 12),
-            12
-        ),
-    };
+    instr.destinationRegister = static_cast<RegisterIndex>(getBits(encoded, 7, 11));
+    instr.immediate = getBits(encoded, 12, 31) << 12;
 }
 
-struct UJInstruction
+static void decodeJFormat(uint32_t encoded, Instruction& instr)
 {
-    RegisterIndex rd;
-    uint32_t imm;
-};
-
-static UJInstruction decodeUInstruction(uint32_t encoded)
-{
-    return UJInstruction {
-        .rd = static_cast<RegisterIndex>(getBits(encoded, 7, 11)),
-        .imm = getBits(encoded, 12, 31) << 12,
-    };
-}
-
-static UJInstruction decodeJInstruction(uint32_t encoded)
-{
-    return UJInstruction {
-        .rd = static_cast<RegisterIndex>(getBits(encoded, 7, 11)),
-        .imm = signExtend(
-            (getBits(encoded, 21, 30) << 1) | (getBits(encoded, 20, 20) << 11)
-                | (getBits(encoded, 12, 19) << 12) | (getBits(encoded, 31, 31) << 20),
-            20
-        ),
-    };
+    instr.destinationRegister = static_cast<RegisterIndex>(getBits(encoded, 7, 11));
+    instr.immediate = signExtend(
+        (getBits(encoded, 21, 30) << 1) | (getBits(encoded, 20, 20) << 11)
+            | (getBits(encoded, 12, 19) << 12) | (getBits(encoded, 31, 31) << 20),
+        20
+    );
 }
 
 
-/** Returns a map from original instruction pointers to decoded instruction indexes.
-
-    Source RISC-V instruction pointers are pointers/offsets in the program memory.
-    These pointers can be directly set/added to the program counter register (PC).
-
-    Destination pointers are just indexes/offsets in the instruction array. */
-static std::map<Pointer, Pointer> calcInstructionPointerDecodingMap(std::span<uint8_t const> program
-)
+static InstructionFormat getInstructionFormat(uint8_t opcode)
 {
-    std::map<Pointer, Pointer> pointerDecodingMap {};
-    auto nextInstructionIndex = [&]() { return pointerDecodingMap.size(); };
-
-    for (Pointer programOffset = 0; programOffset < program.size();)
-    {
-        pointerDecodingMap[programOffset] = nextInstructionIndex();
-
-        if (isEncodingCompresssed(program.data() + programOffset))
-            programOffset += 2;
-        else
-            programOffset += 4;
-    }
-
-    return pointerDecodingMap;
-}
-
-
-static Instruction decodeInstruction(
-    uint32_t encoded, std::map<Pointer, Pointer> const& pointerDecodingMap
-)
-{
-    switch (getOpcode(encoded))
+    switch (opcode)
     {
     case 0b0110111: // LUI
-    {
-        auto u = decodeUInstruction(encoded);
-        return Instruction {
-            .immediate = u.imm,
-            .destinationRegister = u.rd,
-            .sourceRegister1 = 0,
-            .sourceRegister2 = 0,
-            .type = Instruction::Type::LUI,
-        };
-    }
-
+    case 0b0010111: // AUIPC
+        return InstructionFormat::U;
+    case 0b1101111: // JAL
+        return InstructionFormat::J;
+    case 0b1100111: // JALR
+    case 0b0000011: // LOAD
+    case 0b0010011: // OP-IMM
+    case 0b1110011: // SYSTEM
+        return InstructionFormat::I;
+    case 0b0100011: // STORE
+        return InstructionFormat::S;
+    case 0b1100011: // BRANCH
+        return InstructionFormat::B;
+    case 0b0110011: // OP
+        return InstructionFormat::R;
     default:
-        throw std::runtime_error("Illegal instruction");
+        throw std::runtime_error("Illegal instruction opcode");
     }
 }
 
-static Instruction decodeCompressedInstruction(
-    uint16_t encoded, std::map<Pointer, Pointer> const& pointerDecodingMap
-)
+static Instruction::Type getInstructionType(uint8_t opcode, uint8_t funct3, uint8_t funct7)
 {
-    throw std::runtime_error("Compressed instruction decoding not implemented yet");
+    switch (opcode)
+    {
+    case 0b0110111: // LUI
+        return Instruction::Type::LUI;
+    case 0b0010111: // AUIPC
+        return Instruction::Type::AUIPC;
+    case 0b1101111: // JAL
+        return Instruction::Type::JAL;
+    case 0b1100111: // JALR
+        return Instruction::Type::JALR;
+    case 0b1100011: // BRANCH
+        switch (funct3)
+        {
+        case 0b000:
+            return Instruction::Type::BEQ;
+        case 0b001:
+            return Instruction::Type::BNE;
+        case 0b100:
+            return Instruction::Type::BLT;
+        case 0b101:
+            return Instruction::Type::BGE;
+        case 0b110:
+            return Instruction::Type::BLTU;
+        case 0b111:
+            return Instruction::Type::BGEU;
+        default:
+            throw std::runtime_error("Illegal instruction funct3");
+        }
+    case 0b0000011: // LOAD
+        switch (funct3)
+        {
+        case 0b000:
+            return Instruction::Type::LB;
+        case 0b001:
+            return Instruction::Type::LH;
+        case 0b010:
+            return Instruction::Type::LW;
+        case 0b100:
+            return Instruction::Type::LBU;
+        case 0b101:
+            return Instruction::Type::LHU;
+        default:
+            throw std::runtime_error("Illegal instruction funct3");
+        }
+    case 0b0100011: // STORE
+        switch (funct3)
+        {
+        case 0b000:
+            return Instruction::Type::SB;
+        case 0b001:
+            return Instruction::Type::SH;
+        case 0b010:
+            return Instruction::Type::SW;
+        default:
+            throw std::runtime_error("Illegal instruction funct3");
+        }
+    case 0b0010011: // OP-IMM
+        switch (funct3)
+        {
+        case 0b000:
+            return Instruction::Type::ADDI;
+        case 0b010:
+            return Instruction::Type::SLTI;
+        case 0b011:
+            return Instruction::Type::SLTIU;
+        case 0b100:
+            return Instruction::Type::XORI;
+        case 0b110:
+            return Instruction::Type::ORI;
+        case 0b111:
+            return Instruction::Type::ANDI;
+        case 0b001:
+            return Instruction::Type::SLLI;
+        case 0b101:
+            switch (funct7)
+            {
+            case 0b0000000:
+                return Instruction::Type::SRLI;
+            case 0b0100000:
+                return Instruction::Type::SRAI;
+            default:
+                throw std::runtime_error("Illegal instruction funct7");
+            }
+        default:
+            throw std::runtime_error("Illegal instruction funct3");
+        }
+    case 0b0110011: // OP
+        switch (funct3)
+        {
+        case 0b000:
+            switch (funct7)
+            {
+            case 0b0000000:
+                return Instruction::Type::ADD;
+            case 0b0100000:
+                return Instruction::Type::SUB;
+            default:
+                throw std::runtime_error("Illegal instruction funct7");
+            }
+
+        case 0b001:
+            return Instruction::Type::SLL;
+        case 0b010:
+            return Instruction::Type::SLT;
+        case 0b011:
+            return Instruction::Type::SLTU;
+        case 0b100:
+            return Instruction::Type::XOR;
+        case 0b101:
+            switch (funct7)
+            {
+            case 0b0000000:
+                return Instruction::Type::SRL;
+            case 0b0100000:
+                return Instruction::Type::SRA;
+            default:
+                throw std::runtime_error("Illegal instruction funct7");
+            }
+        }
+
+
+    default:
+        throw std::runtime_error("Illegal instruction funct3");
+    }
+}
+
+
+static Instruction decodeInstruction(uint32_t encoded)
+{
+    Instruction instr {};
+    uint8_t funct3 = 0;
+    uint8_t funct7 = 0;
+    uint8_t opcode = getOpcode(encoded);
+
+    switch (getInstructionFormat(opcode))
+    {
+    case InstructionFormat::U:
+        decodeUFormat(encoded, instr);
+        break;
+    case InstructionFormat::J:
+        decodeJFormat(encoded, instr);
+        break;
+    case InstructionFormat::I:
+        decodeIFormat(encoded, instr, funct3);
+        break;
+    case InstructionFormat::S:
+        decodeSFormat(encoded, instr, funct3);
+        break;
+    case InstructionFormat::B:
+        decodeBFormat(encoded, instr, funct3);
+        break;
+    case InstructionFormat::R:
+        decodeRFormat(encoded, instr, funct3, funct7);
+        break;
+    default:
+        throw std::runtime_error("Illegal instruction format");
+    }
+
+    instr.type = static_cast<Instruction::Type>(getInstructionType(opcode, funct3, funct7));
+
+    return instr;
 }
 
 
 std::vector<Instruction> decodeInstructions(std::span<uint8_t const> program)
 {
+    if (program.size() % 4 != 0)
+    {
+        throw std::runtime_error("Program size must be a multiple of 4");
+    }
+
     std::vector<Instruction> instructions {};
 
-    auto const pointerDecodingMap = calcInstructionPointerDecodingMap(program);
-
-    for (Pointer programOffset = 0; programOffset < program.size();)
+    for (Pointer programOffset = 0; programOffset < program.size(); programOffset += 4)
     {
-        auto const instructionBytes = program.data() + programOffset;
-
-        if (isEncodingCompresssed(instructionBytes))
-        {
-            uint16_t encoded = loadU16(instructionBytes);
-            Instruction instruction = decodeCompressedInstruction(encoded, pointerDecodingMap);
-            instructions.push_back(instruction);
-
-            programOffset += 2;
-        }
-        else
-        {
-            uint32_t encoded = loadU32(instructionBytes);
-            Instruction instruction = decodeInstruction(encoded, pointerDecodingMap);
-            instructions.push_back(instruction);
-
-            programOffset += 4;
-        }
+        uint32_t encoded = loadU32(program.data() + programOffset);
+        Instruction instruction = decodeInstruction(encoded);
+        instructions.push_back(instruction);
     }
 
     return instructions;
