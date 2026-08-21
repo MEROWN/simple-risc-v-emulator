@@ -1,6 +1,11 @@
 #include <src/riscv/instruction.hpp>
 
+#include <src/utils/bits.hpp>
+
 #include <stdexcept>
+
+
+using namespace utils;
 
 
 namespace riscv
@@ -34,46 +39,6 @@ enum class Opcode : uint8_t
     OpVE = 0b1110111,
 };
 
-template <typename T>
-static constexpr bool hasBit(T value, uint8_t bitIndex)
-{
-    return (value & (static_cast<T>(1) << bitIndex)) != 0;
-}
-
-template <typename T>
-static constexpr void setBit(T& value, uint8_t bitIndex)
-{
-    value |= (static_cast<T>(1) << bitIndex);
-}
-
-template <typename T>
-static constexpr void clearBit(T& value, uint8_t bitIndex)
-{
-    value &= ~(static_cast<T>(1) << bitIndex);
-}
-
-/** Returns a bitmask with the specified number of bits set to 1.
-    Example: oneBits<uint32_t>(3) returns 0b111 */
-template <typename T>
-static constexpr T oneBits(uint8_t count)
-{
-    return (static_cast<T>(1) << count) - 1;
-}
-
-/** Gets the value of a bitfield located in the given bits. */
-template <typename T>
-static constexpr T getBits(T value, uint8_t firstBit, uint8_t lastBit)
-{
-    return (value >> firstBit) & oneBits<T>(lastBit - firstBit + 1);
-}
-
-template <typename T>
-static constexpr T signExtend(T value, uint8_t signBit)
-{
-    T signBitMask = value & (1 << signBit);
-    T extendedSignBitMask = -signBitMask;
-    return value | extendedSignBitMask;
-}
 
 /** Gets the Operation Code (opcode), which gives a loose classification of the instruction. */
 static Opcode getOpcode(uint32_t encoded)
@@ -198,8 +163,11 @@ static void readFieldsJ(uint32_t encoded, Instruction& instr)
 }
 
 
-static void decodeBranch(Instruction& instr, uint8_t funct3)
+static void decodeBranch(uint32_t encoded, Instruction& instr)
 {
+    uint8_t funct3;
+    readFieldsB(encoded, instr, funct3);
+
     switch (funct3)
     {
     case 0b000:
@@ -222,12 +190,15 @@ static void decodeBranch(Instruction& instr, uint8_t funct3)
         break;
 
     default:
-        throw std::runtime_error("Illegal BRANCH instruction funct3: " + std::to_string(funct3));
+        throw std::runtime_error("Unknown BRANCH instruction funct3: " + std::to_string(funct3));
     }
 }
 
-static void decodeLoad(Instruction& instr, uint8_t funct3)
+static void decodeLoad(uint32_t encoded, Instruction& instr)
 {
+    uint8_t funct3;
+    readFieldsI(encoded, instr, funct3);
+
     switch (funct3)
     {
     case 0b000:
@@ -246,13 +217,24 @@ static void decodeLoad(Instruction& instr, uint8_t funct3)
         instr.type = Instruction::Type::LHU;
         break;
 
+    // RV64I
+    case 0b110:
+        instr.type = Instruction::Type::LWU;
+        break;
+    case 0b011:
+        instr.type = Instruction::Type::LD;
+        break;
+
     default:
-        throw std::runtime_error("Illegal LOAD instruction funct3: " + std::to_string(funct3));
+        throw std::runtime_error("Unknown LOAD instruction funct3: " + std::to_string(funct3));
     }
 }
 
-static void decodeStore(Instruction& instr, uint8_t funct3)
+static void decodeStore(uint32_t encoded, Instruction& instr)
 {
+    uint8_t funct3;
+    readFieldsS(encoded, instr, funct3);
+
     switch (funct3)
     {
     case 0b000:
@@ -265,13 +247,21 @@ static void decodeStore(Instruction& instr, uint8_t funct3)
         instr.type = Instruction::Type::SW;
         break;
 
+    // RV64I
+    case 0b011:
+        instr.type = Instruction::Type::SD;
+        break;
+
     default:
-        throw std::runtime_error("Illegal STORE instruction funct3: " + std::to_string(funct3));
+        throw std::runtime_error("Unknown STORE instruction funct3: " + std::to_string(funct3));
     }
 }
 
-static void decodeOpImm(Instruction& instr, uint8_t funct3)
+static void decodeOpImm(uint32_t encoded, Instruction& instr)
 {
+    uint8_t funct3;
+    readFieldsI(encoded, instr, funct3);
+
     switch (funct3)
     {
     case 0b000:
@@ -309,12 +299,15 @@ static void decodeOpImm(Instruction& instr, uint8_t funct3)
         break;
 
     default:
-        throw std::runtime_error("Illegal OP-IMM instruction funct3: " + std::to_string(funct3));
+        throw std::runtime_error("Unknown OP-IMM instruction funct3: " + std::to_string(funct3));
     }
 }
 
-static void decodeOp(Instruction& instr, uint8_t funct3, uint8_t funct7)
+static void decodeOp(uint32_t encoded, Instruction& instr)
 {
+    uint8_t funct3, funct7;
+    readFieldsR(encoded, instr, funct3, funct7);
+
     switch (funct3)
     {
     case 0b000:
@@ -366,7 +359,51 @@ static void decodeOp(Instruction& instr, uint8_t funct3, uint8_t funct7)
         break;
 
     default:
-        throw std::runtime_error("Illegal OP instruction funct3: " + std::to_string(funct3));
+        throw std::runtime_error("Unknown OP instruction funct3: " + std::to_string(funct3));
+    }
+}
+
+static void decodeMiscMem(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3;
+    readFieldsI(encoded, instr, funct3);
+
+    switch (funct3)
+    {
+    case 0b000:
+        instr.type = Instruction::Type::FENCE;
+        break;
+
+        // TODO MiscMem: FENCETSO, PAUSE
+
+    default:
+        throw std::runtime_error("Unknown MISC-MEM instruction funct3: " + std::to_string(funct3));
+    }
+}
+
+static void decodeSystem(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3;
+    readFieldsI(encoded, instr, funct3);
+
+    uint32_t immediate = instr.immediate;
+    instr.immediate = 0;
+
+    switch (funct3)
+    {
+    case 0b000:
+        if (immediate == 0)
+            instr.type = Instruction::Type::ECALL;
+        else if (immediate == 1)
+            instr.type = Instruction::Type::EBREAK;
+        else
+            throw std::runtime_error(
+                "Unknown SYSTEM instruction immediate: " + std::to_string(instr.immediate)
+            );
+        break;
+
+    default:
+        throw std::runtime_error("Unknown SYSTEM instruction funct3: " + std::to_string(funct3));
     }
 }
 
@@ -399,48 +436,36 @@ static void decodeInstruction(Instruction& instr, uint32_t encoded)
     break;
 
     case Opcode::Branch:
-    {
-        uint8_t funct3;
-        readFieldsB(encoded, instr, funct3);
-        decodeBranch(instr, funct3);
-    }
-    break;
+        decodeBranch(encoded, instr);
+        break;
 
     case Opcode::Load:
-    {
-        uint8_t funct3;
-        readFieldsI(encoded, instr, funct3);
-        decodeLoad(instr, funct3);
-    }
-    break;
+        decodeLoad(encoded, instr);
+        break;
 
     case Opcode::Store:
-    {
-        uint8_t funct3;
-        readFieldsS(encoded, instr, funct3);
-        decodeStore(instr, funct3);
-    }
-    break;
+        decodeStore(encoded, instr);
+        break;
 
     case Opcode::OpImm:
-    {
-        uint8_t funct3;
-        readFieldsI(encoded, instr, funct3);
-        decodeOpImm(instr, funct3);
-    }
-    break;
+        decodeOpImm(encoded, instr);
+        break;
 
     case Opcode::Op:
-    {
-        uint8_t funct3, funct7;
-        readFieldsR(encoded, instr, funct3, funct7);
-        decodeOp(instr, funct3, funct7);
-    }
-    break;
+        decodeOp(encoded, instr);
+        break;
+
+    case Opcode::MiscMem:
+        decodeMiscMem(encoded, instr);
+        break;
+
+    case Opcode::System:
+        decodeSystem(encoded, instr);
+        break;
 
     default:
         throw std::runtime_error(
-            "Illegal instruction opcode: "
+            "Unknown instruction opcode: "
             + std::to_string(static_cast<uint8_t>(getOpcode(encoded)))
         );
     }
