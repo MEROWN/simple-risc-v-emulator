@@ -2,6 +2,7 @@
 
 #include <src/utils/bits.hpp>
 
+#include <format>
 #include <stdexcept>
 
 
@@ -38,6 +39,23 @@ enum class Opcode : uint8_t
     System = 0b1110011,
     OpVE = 0b1110111,
 };
+
+
+class UnknownInstructionException : public std::runtime_error
+{
+public:
+    UnknownInstructionException(uint32_t encoded, std::string const& clazz)
+        : std::runtime_error(std::format("Unknown instruction (class {}): {:b} ", clazz, encoded))
+    {
+    }
+};
+
+
+static bool isEncodingCompressed(uint8_t const *instructionBytes)
+{
+    uint8_t lowestByte = instructionBytes[0];
+    return (lowestByte & 0b11) != 0b11;
+}
 
 
 /** Gets the Operation Code (opcode), which gives a loose classification of the instruction. */
@@ -190,7 +208,7 @@ static void decodeBranch(uint32_t encoded, Instruction& instr)
         break;
 
     default:
-        throw std::runtime_error("Unknown BRANCH instruction funct3: " + std::to_string(funct3));
+        throw UnknownInstructionException(encoded, "BRANCH");
     }
 }
 
@@ -226,7 +244,7 @@ static void decodeLoad(uint32_t encoded, Instruction& instr)
         break;
 
     default:
-        throw std::runtime_error("Unknown LOAD instruction funct3: " + std::to_string(funct3));
+        throw UnknownInstructionException(encoded, "LOAD");
     }
 }
 
@@ -253,7 +271,7 @@ static void decodeStore(uint32_t encoded, Instruction& instr)
         break;
 
     default:
-        throw std::runtime_error("Unknown STORE instruction funct3: " + std::to_string(funct3));
+        throw UnknownInstructionException(encoded, "STORE");
     }
 }
 
@@ -267,6 +285,9 @@ static void decodeOpImm(uint32_t encoded, Instruction& instr)
     case 0b000:
         instr.type = Instruction::Type::ADDI;
         break;
+    case 0b001:
+        instr.type = Instruction::Type::SLLI;
+        break;
     case 0b010:
         instr.type = Instruction::Type::SLTI;
         break;
@@ -275,15 +296,6 @@ static void decodeOpImm(uint32_t encoded, Instruction& instr)
         break;
     case 0b100:
         instr.type = Instruction::Type::XORI;
-        break;
-    case 0b110:
-        instr.type = Instruction::Type::ORI;
-        break;
-    case 0b111:
-        instr.type = Instruction::Type::ANDI;
-        break;
-    case 0b001:
-        instr.type = Instruction::Type::SLLI;
         break;
 
     case 0b101:
@@ -298,8 +310,44 @@ static void decodeOpImm(uint32_t encoded, Instruction& instr)
         }
         break;
 
+    case 0b110:
+        instr.type = Instruction::Type::ORI;
+        break;
+    case 0b111:
+        instr.type = Instruction::Type::ANDI;
+        break;
+    }
+}
+
+static void decodeOpImm32(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3;
+    readFieldsI(encoded, instr, funct3);
+
+    switch (funct3)
+    {
+    case 0b000:
+        instr.type = Instruction::Type::ADDIW;
+        break;
+
+    case 0b001:
+        instr.type = Instruction::Type::SLLIW;
+        break;
+
+    case 0b101:
+        if (hasBit(instr.immediate, 10))
+        {
+            clearBit(instr.immediate, 10);
+            instr.type = Instruction::Type::SRAIW;
+        }
+        else
+        {
+            instr.type = Instruction::Type::SRLIW;
+        }
+        break;
+
     default:
-        throw std::runtime_error("Unknown OP-IMM instruction funct3: " + std::to_string(funct3));
+        throw UnknownInstructionException(encoded, "OP-IMM32");
     }
 }
 
@@ -308,58 +356,181 @@ static void decodeOp(uint32_t encoded, Instruction& instr)
     uint8_t funct3, funct7;
     readFieldsR(encoded, instr, funct3, funct7);
 
-    switch (funct3)
+    switch (funct7)
     {
-    case 0b000:
-        if (hasBit(funct7, 5))
+    case 0b0000000:
+        switch (funct3)
         {
-            clearBit(funct7, 5);
-            instr.type = Instruction::Type::SUB;
+        case 0b000:
+            if (hasBit(funct7, 5))
+            {
+                clearBit(funct7, 5);
+                instr.type = Instruction::Type::SUB;
+            }
+            else
+            {
+                instr.type = Instruction::Type::ADD;
+            }
+            break;
+
+        case 0b001:
+            instr.type = Instruction::Type::SLL;
+            break;
+
+        case 0b010:
+            instr.type = Instruction::Type::SLT;
+            break;
+
+        case 0b011:
+            instr.type = Instruction::Type::SLTU;
+            break;
+
+        case 0b100:
+            instr.type = Instruction::Type::XOR;
+            break;
+
+        case 0b101:
+            if (hasBit(funct7, 5))
+            {
+                clearBit(funct7, 5);
+                instr.type = Instruction::Type::SRA;
+            }
+            else
+            {
+                instr.type = Instruction::Type::SRL;
+            }
+            break;
+
+        case 0b110:
+            instr.type = Instruction::Type::OR;
+            break;
+
+        case 0b111:
+            instr.type = Instruction::Type::AND;
+            break;
         }
-        else
+
+        break;
+
+    // RV32M
+    case 0b0000001:
+        switch (funct3)
         {
-            instr.type = Instruction::Type::ADD;
+        case 0b000:
+            instr.type = Instruction::Type::MUL;
+            break;
+
+        case 0b001:
+            instr.type = Instruction::Type::MULH;
+            break;
+
+        case 0b010:
+            instr.type = Instruction::Type::MULHSU;
+            break;
+
+        case 0b011:
+            instr.type = Instruction::Type::MULHU;
+            break;
+
+        case 0b100:
+            instr.type = Instruction::Type::DIV;
+            break;
+
+        case 0b101:
+            instr.type = Instruction::Type::DIVU;
+            break;
+
+        case 0b110:
+            instr.type = Instruction::Type::REM;
+            break;
+
+        case 0b111:
+            instr.type = Instruction::Type::REMU;
+            break;
         }
-        break;
-
-    case 0b001:
-        instr.type = Instruction::Type::SLL;
-        break;
-
-    case 0b010:
-        instr.type = Instruction::Type::SLT;
-        break;
-
-    case 0b011:
-        instr.type = Instruction::Type::SLTU;
-        break;
-
-    case 0b100:
-        instr.type = Instruction::Type::XOR;
-        break;
-
-    case 0b101:
-        if (hasBit(funct7, 5))
-        {
-            clearBit(funct7, 5);
-            instr.type = Instruction::Type::SRA;
-        }
-        else
-        {
-            instr.type = Instruction::Type::SRL;
-        }
-        break;
-
-    case 0b110:
-        instr.type = Instruction::Type::OR;
-        break;
-
-    case 0b111:
-        instr.type = Instruction::Type::AND;
         break;
 
     default:
-        throw std::runtime_error("Unknown OP instruction funct3: " + std::to_string(funct3));
+        throw UnknownInstructionException(encoded, "OP");
+    }
+}
+
+static void decodeOp32(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3, funct7;
+    readFieldsR(encoded, instr, funct3, funct7);
+
+    switch (funct7)
+    {
+    case 0b0000000:
+        switch (funct3)
+        {
+        case 0b000:
+            if (hasBit(funct7, 5))
+            {
+                clearBit(funct7, 5);
+                instr.type = Instruction::Type::SUBW;
+            }
+            else
+            {
+                instr.type = Instruction::Type::ADDW;
+            }
+            break;
+
+        case 0b001:
+            instr.type = Instruction::Type::SLLW;
+            break;
+
+        case 0b101:
+            if (hasBit(funct7, 5))
+            {
+                clearBit(funct7, 5);
+                instr.type = Instruction::Type::SRAW;
+            }
+            else
+            {
+                instr.type = Instruction::Type::SRLW;
+            }
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-32");
+        }
+
+        break;
+
+    // RV64M
+    case 0b0000001:
+        switch (funct3)
+        {
+        case 0b000:
+            instr.type = Instruction::Type::MULW;
+            break;
+
+        case 0b100:
+            instr.type = Instruction::Type::DIVW;
+            break;
+
+        case 0b101:
+            instr.type = Instruction::Type::DIVUW;
+            break;
+
+        case 0b110:
+            instr.type = Instruction::Type::REMW;
+            break;
+
+        case 0b111:
+            instr.type = Instruction::Type::REMUW;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-32");
+        }
+
+        break;
+
+    default:
+        throw UnknownInstructionException(encoded, "OP-32");
     }
 }
 
@@ -371,13 +542,24 @@ static void decodeMiscMem(uint32_t encoded, Instruction& instr)
     switch (funct3)
     {
     case 0b000:
-        instr.type = Instruction::Type::FENCE;
+        instr.immediate &= 0b1111'1111'1111;
+
+        if (instr.immediate == 0b1000'0011'0011)
+            instr.type = Instruction::Type::FENCETSO;
+        else if (instr.immediate == 0b0000'0001'0000)
+            instr.type = Instruction::Type::PAUSE;
+        else
+            instr.type = Instruction::Type::FENCE;
+
         break;
 
-        // TODO MiscMem: FENCETSO, PAUSE
+    // Zifencei
+    case 0b001:
+        instr.type = Instruction::Type::FENCEI;
+        break;
 
     default:
-        throw std::runtime_error("Unknown MISC-MEM instruction funct3: " + std::to_string(funct3));
+        throw UnknownInstructionException(encoded, "MISC-MEM");
     }
 }
 
@@ -386,7 +568,7 @@ static void decodeSystem(uint32_t encoded, Instruction& instr)
     uint8_t funct3;
     readFieldsI(encoded, instr, funct3);
 
-    uint32_t immediate = instr.immediate;
+    auto immediate = instr.immediate;
     instr.immediate = 0;
 
     switch (funct3)
@@ -397,13 +579,31 @@ static void decodeSystem(uint32_t encoded, Instruction& instr)
         else if (immediate == 1)
             instr.type = Instruction::Type::EBREAK;
         else
-            throw std::runtime_error(
-                "Unknown SYSTEM instruction immediate: " + std::to_string(instr.immediate)
-            );
+            throw UnknownInstructionException(encoded, "SYSTEM");
+        break;
+
+    // Zicsr
+    case 0b001:
+        instr.type = Instruction::Type::CSRRW;
+        break;
+    case 0b010:
+        instr.type = Instruction::Type::CSRRS;
+        break;
+    case 0b011:
+        instr.type = Instruction::Type::CSRRC;
+        break;
+    case 0b101:
+        instr.type = Instruction::Type::CSRRWI;
+        break;
+    case 0b110:
+        instr.type = Instruction::Type::CSRRSI;
+        break;
+    case 0b111:
+        instr.type = Instruction::Type::CSRRCI;
         break;
 
     default:
-        throw std::runtime_error("Unknown SYSTEM instruction funct3: " + std::to_string(funct3));
+        throw UnknownInstructionException(encoded, "SYSTEM");
     }
 }
 
@@ -451,8 +651,16 @@ static void decodeInstruction(Instruction& instr, uint32_t encoded)
         decodeOpImm(encoded, instr);
         break;
 
+    case Opcode::OpImm32:
+        decodeOpImm32(encoded, instr);
+        break;
+
     case Opcode::Op:
         decodeOp(encoded, instr);
+        break;
+
+    case Opcode::Op32:
+        decodeOp32(encoded, instr);
         break;
 
     case Opcode::MiscMem:
@@ -464,10 +672,7 @@ static void decodeInstruction(Instruction& instr, uint32_t encoded)
         break;
 
     default:
-        throw std::runtime_error(
-            "Unknown instruction opcode: "
-            + std::to_string(static_cast<uint8_t>(getOpcode(encoded)))
-        );
+        throw UnknownInstructionException(encoded, "unknown");
     }
 }
 
@@ -485,9 +690,15 @@ std::vector<Instruction> decodeInstructions(std::span<uint8_t const> program)
 
     for (Pointer programOffset = 0; programOffset < program.size(); programOffset += 4)
     {
-        uint32_t encoded = loadU32(program.data() + programOffset);
+        auto instructionBytes = program.data() + programOffset;
+
+        if (isEncodingCompressed(instructionBytes))
+            throw std::runtime_error("Compressed instructions are not supported");
+
+        uint32_t encoded = loadU32(instructionBytes);
         Instruction instruction {};
         decodeInstruction(instruction, encoded);
+
         instructions.push_back(instruction);
     }
 
