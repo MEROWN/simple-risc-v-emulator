@@ -362,44 +362,45 @@ static void decodeOp(uint32_t encoded, Instruction& instr)
         switch (funct3)
         {
         case 0b000:
-            if (hasBit(funct7, 5))
-                instr.type = Instruction::Type::SUB;
-            else
-                instr.type = Instruction::Type::ADD;
+            instr.type = Instruction::Type::ADD;
             break;
-
         case 0b001:
             instr.type = Instruction::Type::SLL;
             break;
-
         case 0b010:
             instr.type = Instruction::Type::SLT;
             break;
-
         case 0b011:
             instr.type = Instruction::Type::SLTU;
             break;
-
         case 0b100:
             instr.type = Instruction::Type::XOR;
             break;
-
         case 0b101:
-            if (hasBit(funct7, 5))
-                instr.type = Instruction::Type::SRA;
-            else
-                instr.type = Instruction::Type::SRL;
+            instr.type = Instruction::Type::SRL;
             break;
-
         case 0b110:
             instr.type = Instruction::Type::OR;
             break;
-
         case 0b111:
             instr.type = Instruction::Type::AND;
             break;
         }
+        break;
 
+    case 0b0100000:
+        switch (funct3)
+        {
+        case 0b000:
+            instr.type = Instruction::Type::SUB;
+            break;
+        case 0b101:
+            instr.type = Instruction::Type::SRA;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP");
+        }
         break;
 
     // RV32M
@@ -409,31 +410,24 @@ static void decodeOp(uint32_t encoded, Instruction& instr)
         case 0b000:
             instr.type = Instruction::Type::MUL;
             break;
-
         case 0b001:
             instr.type = Instruction::Type::MULH;
             break;
-
         case 0b010:
             instr.type = Instruction::Type::MULHSU;
             break;
-
         case 0b011:
             instr.type = Instruction::Type::MULHU;
             break;
-
         case 0b100:
             instr.type = Instruction::Type::DIV;
             break;
-
         case 0b101:
             instr.type = Instruction::Type::DIVU;
             break;
-
         case 0b110:
             instr.type = Instruction::Type::REM;
             break;
-
         case 0b111:
             instr.type = Instruction::Type::REMU;
             break;
@@ -456,27 +450,33 @@ static void decodeOp32(uint32_t encoded, Instruction& instr)
         switch (funct3)
         {
         case 0b000:
-            if (hasBit(funct7, 5))
-                instr.type = Instruction::Type::SUBW;
-            else
-                instr.type = Instruction::Type::ADDW;
+            instr.type = Instruction::Type::ADDW;
             break;
-
         case 0b001:
             instr.type = Instruction::Type::SLLW;
             break;
-
         case 0b101:
-            if (hasBit(funct7, 5))
-                instr.type = Instruction::Type::SRAW;
-            else
-                instr.type = Instruction::Type::SRLW;
+            instr.type = Instruction::Type::SRLW;
             break;
 
         default:
             throw UnknownInstructionException(encoded, "OP-32");
         }
+        break;
 
+    case 0b0100000:
+        switch (funct3)
+        {
+        case 0b000:
+            instr.type = Instruction::Type::SUBW;
+            break;
+        case 0b101:
+            instr.type = Instruction::Type::SRAW;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-32");
+        }
         break;
 
     // RV64M
@@ -486,19 +486,15 @@ static void decodeOp32(uint32_t encoded, Instruction& instr)
         case 0b000:
             instr.type = Instruction::Type::MULW;
             break;
-
         case 0b100:
             instr.type = Instruction::Type::DIVW;
             break;
-
         case 0b101:
             instr.type = Instruction::Type::DIVUW;
             break;
-
         case 0b110:
             instr.type = Instruction::Type::REMW;
             break;
-
         case 0b111:
             instr.type = Instruction::Type::REMUW;
             break;
