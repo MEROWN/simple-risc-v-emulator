@@ -25,6 +25,11 @@ using RegisterIndex = uint8_t;
 /** Count of general-purpose registers (x0, x1, ..., x31) */
 constexpr RegisterIndex registerCount = 32;
 
+/** Count of floating-point registers (f0, f1, ..., f31) */
+constexpr RegisterIndex floatRegisterCount = 32;
+
+using FloatRegister = double;
+
 
 static inline uint16_t loadU16(uint8_t const *ptr)
 {

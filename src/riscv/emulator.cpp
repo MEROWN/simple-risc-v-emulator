@@ -25,28 +25,28 @@ void Emulator::run(Thread& t)
         switch (instr.type)
         {
         case Instruction::Type::LUI:
-            t.setRegister(instr.destinationRegister, instr.immediate);
+            t.registers.set(instr.destinationRegister, instr.immediate);
             break;
 
         case Instruction::Type::AUIPC:
-            t.setRegister(instr.destinationRegister, t.programCounter + instr.immediate);
+            t.registers.set(instr.destinationRegister, t.programCounter + instr.immediate);
             break;
 
         case Instruction::Type::JAL:
-            t.setRegister(instr.destinationRegister, t.getNextProgramCounter());
+            t.registers.set(instr.destinationRegister, t.getNextProgramCounter());
             t.programCounter += instr.immediate;
             continue;
 
         case Instruction::Type::JALR:
         {
-            t.setRegister(instr.destinationRegister, t.getNextProgramCounter());
-            t.programCounter = t.getRegister(instr.sourceRegister1) + instr.immediate;
+            t.registers.set(instr.destinationRegister, t.getNextProgramCounter());
+            t.programCounter = t.registers[instr.sourceRegister1] + instr.immediate;
             t.programCounter &= ~0b1;
             continue;
         }
 
         case Instruction::Type::BEQ:
-            if (t.getRegister(instr.sourceRegister1) == t.getRegister(instr.sourceRegister2))
+            if (t.registers[instr.sourceRegister1] == t.registers[instr.sourceRegister2])
             {
                 t.programCounter += instr.immediate;
                 continue;
@@ -54,7 +54,7 @@ void Emulator::run(Thread& t)
             break;
 
         case Instruction::Type::BNE:
-            if (t.getRegister(instr.sourceRegister1) != t.getRegister(instr.sourceRegister2))
+            if (t.registers[instr.sourceRegister1] != t.registers[instr.sourceRegister2])
             {
                 t.programCounter += instr.immediate;
                 continue;
@@ -62,8 +62,8 @@ void Emulator::run(Thread& t)
             break;
 
         case Instruction::Type::BLT:
-            if (static_cast<int64_t>(t.getRegister(instr.sourceRegister1))
-                < static_cast<int64_t>(t.getRegister(instr.sourceRegister2)))
+            if (static_cast<int64_t>(t.registers[instr.sourceRegister1])
+                < static_cast<int64_t>(t.registers[instr.sourceRegister2]))
             {
                 t.programCounter += instr.immediate;
                 continue;
@@ -71,8 +71,8 @@ void Emulator::run(Thread& t)
             break;
 
         case Instruction::Type::BGE:
-            if (static_cast<int64_t>(t.getRegister(instr.sourceRegister1))
-                >= static_cast<int64_t>(t.getRegister(instr.sourceRegister2)))
+            if (static_cast<int64_t>(t.registers[instr.sourceRegister1])
+                >= static_cast<int64_t>(t.registers[instr.sourceRegister2]))
             {
                 t.programCounter += instr.immediate;
                 continue;
@@ -80,7 +80,7 @@ void Emulator::run(Thread& t)
             break;
 
         case Instruction::Type::BLTU:
-            if (t.getRegister(instr.sourceRegister1) < t.getRegister(instr.sourceRegister2))
+            if (t.registers[instr.sourceRegister1] < t.registers[instr.sourceRegister2])
             {
                 t.programCounter += instr.immediate;
                 continue;
@@ -88,7 +88,7 @@ void Emulator::run(Thread& t)
             break;
 
         case Instruction::Type::BGEU:
-            if (t.getRegister(instr.sourceRegister1) >= t.getRegister(instr.sourceRegister2))
+            if (t.registers[instr.sourceRegister1] >= t.registers[instr.sourceRegister2])
             {
                 t.programCounter += instr.immediate;
                 continue;

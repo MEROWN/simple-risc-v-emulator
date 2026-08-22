@@ -13,13 +13,40 @@ namespace riscv
 {
 
 
+/** Represents integer registers (x0, x1, ..., x31) */
+class RegisterFile
+{
+public:
+    Register operator[](RegisterIndex index) const
+    {
+        return registers[index];
+    }
+
+    void set(RegisterIndex index, Register value)
+    {
+        if (index == 0)
+            return;
+
+        registers[index] = value;
+    }
+
+private:
+    std::array<Register, registerCount> registers {};
+};
+
+
 /** Holds the state of a RISC-V hart (HARdware Thread) */
 class Thread
 {
 public:
+    RegisterFile registers {};
+
+    std::array<FloatRegister, floatRegisterCount> floatRegisters {};
+
     /** This is semantically a pointer into the original program bytes.
         Jump instructions can change it in arbitrary ways. */
     Register programCounter = 0;
+
 
     Pointer getInstructionIndex() const
     {
@@ -30,20 +57,6 @@ public:
     {
         return programCounter + 4;
     }
-
-    Register getRegister(uint8_t registerIndex) const
-    {
-        return registers[registerIndex];
-    }
-
-    void setRegister(uint8_t registerIndex, Register value)
-    {
-        if (registerIndex != 0)
-            registers[registerIndex] = value;
-    }
-
-private:
-    std::array<Register, registerCount> registers {};
 };
 
 
