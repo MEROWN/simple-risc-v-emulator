@@ -607,6 +607,106 @@ static void decodeSystem(uint32_t encoded, Instruction& instr)
     }
 }
 
+static void decodeAMO(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3, funct7;
+    readFieldsR(encoded, instr, funct3, funct7);
+
+    uint8_t funct5 = funct7 >> 2;
+    instr.immediate = funct7 & 0b11; // Acquire and Release flags
+
+    switch (funct3)
+    {
+    case 0b010:
+        switch (funct5)
+        {
+        case 0b00000:
+            instr.type = Instruction::Type::AMOADDW;
+            break;
+        case 0b00001:
+            instr.type = Instruction::Type::AMOSWAPW;
+            break;
+        case 0b00010:
+            instr.type = Instruction::Type::LRW;
+            break;
+        case 0b00011:
+            instr.type = Instruction::Type::SCW;
+            break;
+        case 0b00100:
+            instr.type = Instruction::Type::AMOXORW;
+            break;
+        case 0b01000:
+            instr.type = Instruction::Type::AMOORW;
+            break;
+        case 0b01100:
+            instr.type = Instruction::Type::AMOANDW;
+            break;
+        case 0b10000:
+            instr.type = Instruction::Type::AMOMINW;
+            break;
+        case 0b10100:
+            instr.type = Instruction::Type::AMOMAXW;
+            break;
+        case 0b11000:
+            instr.type = Instruction::Type::AMOMINUW;
+            break;
+        case 0b11100:
+            instr.type = Instruction::Type::AMOMAXUW;
+            break;
+        default:
+            throw UnknownInstructionException(encoded, "AMO");
+        }
+
+        break;
+
+    // RV64A
+    case 0b011:
+        switch (funct5)
+        {
+        case 0b00000:
+            instr.type = Instruction::Type::AMOADDD;
+            break;
+        case 0b00001:
+            instr.type = Instruction::Type::AMOSWAPD;
+            break;
+        case 0b00010:
+            instr.type = Instruction::Type::LRD;
+            break;
+        case 0b00011:
+            instr.type = Instruction::Type::SCD;
+            break;
+        case 0b00100:
+            instr.type = Instruction::Type::AMOXORD;
+            break;
+        case 0b01000:
+            instr.type = Instruction::Type::AMOORD;
+            break;
+        case 0b01100:
+            instr.type = Instruction::Type::AMOANDD;
+            break;
+        case 0b10000:
+            instr.type = Instruction::Type::AMOMIND;
+            break;
+        case 0b10100:
+            instr.type = Instruction::Type::AMOMAXD;
+            break;
+        case 0b11000:
+            instr.type = Instruction::Type::AMOMINUD;
+            break;
+        case 0b11100:
+            instr.type = Instruction::Type::AMOMAXUD;
+            break;
+        default:
+            throw UnknownInstructionException(encoded, "AMO");
+        }
+
+        break;
+
+    default:
+        throw UnknownInstructionException(encoded, "AMO");
+    }
+}
+
 
 static void decodeInstruction(Instruction& instr, uint32_t encoded)
 {
@@ -669,6 +769,10 @@ static void decodeInstruction(Instruction& instr, uint32_t encoded)
 
     case Opcode::System:
         decodeSystem(encoded, instr);
+        break;
+
+    case Opcode::AMO:
+        decodeAMO(encoded, instr);
         break;
 
     default:
