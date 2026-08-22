@@ -17,6 +17,20 @@ namespace riscv
 class Thread
 {
 public:
+    /** This is semantically a pointer into the original program bytes.
+        Jump instructions can change it in arbitrary ways. */
+    Register programCounter = 0;
+
+    Pointer getInstructionIndex() const
+    {
+        return programCounter / 4;
+    }
+
+    Pointer getNextProgramCounter() const
+    {
+        return programCounter + 4;
+    }
+
     Register getRegister(uint8_t registerIndex) const
     {
         return registers[registerIndex];
@@ -28,24 +42,8 @@ public:
             registers[registerIndex] = value;
     }
 
-    Pointer getInstructionIndex() const
-    {
-        return programCounter / 4;
-    }
-
 private:
     std::array<Register, registerCount> registers {};
-
-    /** This is semantically a pointer into the original program bytes.
-        Every instruction increments this by 4. */
-    Register programCounter = 0;
-
-    Pointer getNextProgramCounter() const
-    {
-        return programCounter + 4;
-    }
-
-    friend class Emulator;
 };
 
 
