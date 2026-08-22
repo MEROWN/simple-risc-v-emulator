@@ -1,5 +1,8 @@
-#ifndef RISCV_HPP
-#define RISCV_HPP
+/**
+This file provides utilities for unaligned little-endian memory access.
+*/
+#ifndef RISCV_UTILS_MEMORY_HPP
+#define RISCV_UTILS_MEMORY_HPP
 
 
 #include <bit>
@@ -10,32 +13,11 @@
 namespace riscv
 {
 
-
-// Use fixed-sized integer types everywhere, except for:
-
-using Pointer = uint64_t;
-using Register = Pointer;
-using Size = Pointer;
-
-using Offset = int64_t;
-
-/** Contains values from 0 to registerCount-1. */
-using RegisterIndex = uint8_t;
-
-/** Count of general-purpose registers (x0, x1, ..., x31) */
-constexpr RegisterIndex registerCount = 32;
-
-/** Count of floating-point registers (f0, f1, ..., f31) */
-constexpr RegisterIndex floatRegisterCount = 32;
-
-using FloatRegister = double;
-
-
 static inline uint16_t loadU16(uint8_t const *ptr)
 {
     if constexpr (std::endian::native == std::endian::little)
     {
-        // memcpy allows non-aligned memory access on architectures that don't support it.
+        // memcpy allows unaligned memory access on architectures that don't support it.
         // It should get optimized away for architectures that do.
         uint16_t value;
         std::memcpy(&value, ptr, sizeof(value));
@@ -128,6 +110,5 @@ static inline void storeU64(uint8_t *ptr, uint64_t value)
 
 
 } // namespace riscv
-
 
 #endif

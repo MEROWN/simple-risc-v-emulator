@@ -1,9 +1,8 @@
-#ifndef EMULATOR_HPP
-#define EMULATOR_HPP
+#ifndef RISCV_EMULATOR_HPP
+#define RISCV_EMULATOR_HPP
 
 
 #include <src/riscv/instruction.hpp>
-#include <src/riscv/riscv.hpp>
 
 #include <span>
 #include <vector>
@@ -11,53 +10,6 @@
 
 namespace riscv
 {
-
-
-/** Represents integer registers (x0, x1, ..., x31) */
-class RegisterFile
-{
-public:
-    Register operator[](RegisterIndex index) const
-    {
-        return registers[index];
-    }
-
-    void set(RegisterIndex index, Register value)
-    {
-        if (index == 0)
-            return;
-
-        registers[index] = value;
-    }
-
-private:
-    std::array<Register, registerCount> registers {};
-};
-
-
-/** Holds the state of a RISC-V hart (HARdware Thread) */
-class Thread
-{
-public:
-    RegisterFile registers {};
-
-    std::array<FloatRegister, floatRegisterCount> floatRegisters {};
-
-    /** This is semantically a pointer into the original program bytes.
-        Jump instructions can change it in arbitrary ways. */
-    Register programCounter = 0;
-
-
-    Pointer getInstructionIndex() const
-    {
-        return programCounter / 4;
-    }
-
-    Pointer getNextProgramCounter() const
-    {
-        return programCounter + 4;
-    }
-};
 
 
 class Emulator

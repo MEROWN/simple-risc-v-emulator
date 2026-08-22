@@ -6,7 +6,7 @@
 #include <span>
 #include <string>
 
-#include <src/riscv/riscv.hpp>
+#include <src/riscv/base.hpp>
 
 
 struct Options

@@ -1,8 +1,8 @@
-#ifndef INSTRUCTION_HPP
-#define INSTRUCTION_HPP
+#ifndef RISCV_INSTRUCTION_HPP
+#define RISCV_INSTRUCTION_HPP
 
 
-#include <src/riscv/riscv.hpp>
+#include <src/riscv/base.hpp>
 
 #include <span>
 #include <vector>
@@ -10,16 +10,6 @@
 
 namespace riscv
 {
-
-enum class FloatRoundingMode : uint8_t
-{
-    RNE = 0b000,
-    RTZ = 0b001,
-    RDN = 0b010,
-    RUP = 0b011,
-    RMM = 0b100,
-    DYN = 0b111,
-};
 
 
 struct Instruction

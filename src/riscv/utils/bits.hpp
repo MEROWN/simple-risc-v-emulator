@@ -1,12 +1,15 @@
-#ifndef UTILS_HPP
-#define UTILS_HPP
+/**
+This file provides utilities for bit manipulation.
+*/
+#ifndef RISCV_UTILS_BITS_HPP
+#define RISCV_UTILS_BITS_HPP
 
 
 #include <cstdint>
 #include <type_traits>
 
 
-namespace utils
+namespace riscv
 {
 
 
@@ -60,7 +63,7 @@ static constexpr std::make_signed_t<T> signExtend(T value, uint8_t signBit)
 }
 
 
-} // namespace utils
+} // namespace riscv
 
 
 #endif

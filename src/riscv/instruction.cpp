@@ -1,12 +1,10 @@
 #include <src/riscv/instruction.hpp>
 
-#include <src/utils/bits.hpp>
+#include <src/riscv/utils/bits.hpp>
+#include <src/riscv/utils/memory.hpp>
 
 #include <format>
 #include <stdexcept>
-
-
-using namespace utils;
 
 
 namespace riscv
