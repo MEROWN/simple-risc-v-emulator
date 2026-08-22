@@ -19,8 +19,9 @@ target_sources(riscv-emu
         "src/app.cpp"
         "src/options.cpp"
         "src/renderer.cpp"
-        "src/riscv/emulator.cpp"
+        "src/riscv/base.cpp"
         "src/riscv/instruction.cpp"
+        "src/riscv/emulator.cpp"
 )
 
 target_include_directories(riscv-emu

@@ -18,7 +18,7 @@ Emulator::~Emulator()
 void Emulator::run(Thread& t)
 {
     // TODO(Danil) instruction execution loop
-    while (t.getInstructionIndex() < instructions.size())
+    for (; t.getInstructionIndex() < instructions.size(); t.cycleCounter++)
     {
         Instruction instr = instructions[t.getInstructionIndex()];
 

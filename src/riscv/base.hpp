@@ -3,6 +3,7 @@
 
 
 #include <array>
+#include <chrono>
 #include <cstdint>
 
 
@@ -28,14 +29,34 @@ constexpr RegisterIndex floatRegisterCount = 32;
 using FloatRegister = double;
 
 
+enum class ControlStatusRegister : uint16_t
+{
+    FloatExceptionFlags = 0x001,
+    FloatRoundingMode = 0x002,
+    FloatControlStatusRegister = 0x003,
+
+    Cycle = 0xC00,
+    Time = 0xC01,
+    Instret = 0xC02,
+};
+
 enum class FloatRoundingMode : uint8_t
 {
-    RNE = 0b000,
-    RTZ = 0b001,
-    RDN = 0b010,
-    RUP = 0b011,
-    RMM = 0b100,
-    DYN = 0b111,
+    RoundToNearestEven = 0b000,
+    RoundToZero = 0b001,
+    RoundDown = 0b010,
+    RoundUp = 0b011,
+    RoundToNearestMax = 0b100,
+    Dynamic = 0b111,
+};
+
+enum class FloatExceptionFlags : uint8_t
+{
+    Inexact = 0,
+    Underflow = 1,
+    Overflow = 2,
+    DivideByZero = 3,
+    InvalidOperation = 4,
 };
 
 
@@ -62,16 +83,37 @@ private:
 
 
 /** Holds the state of a RISC-V hart (HARdware Thread) */
-struct Thread
+class Thread
 {
+public:
     RegisterFile registers {};
 
     std::array<FloatRegister, floatRegisterCount> floatRegisters {};
 
     /** This is semantically a pointer into the original program bytes.
-        Jump instructions can change it in arbitrary ways. */
+            Jump instructions can change it in arbitrary ways. */
     Register programCounter = 0;
 
+    FloatRoundingMode dynamicFloatRoundingMode {};
+
+    uint8_t floatExceptionFlags = 0;
+
+    void setFloatExceptionFlag(FloatExceptionFlags flag, bool value);
+    bool getFloatExceptionFlag(FloatExceptionFlags flag) const;
+    Register getFloatControlStatusRegister() const;
+    void setFloatControlStatusRegister(Register value);
+
+    /** This emulates the `cycle` and `instret` Control Status Registers.
+        This should be incremented by 1 after each instruction is executed. */
+    uint64_t cycleCounter = 0;
+
+    /** This emulates the `time` Control Status Register.
+        Returns the elapsed time in nanoseconds. */
+    uint64_t getTime() const
+    {
+        return std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - startTime)
+            .count();
+    }
 
     Pointer getInstructionIndex() const
     {
@@ -82,6 +124,11 @@ struct Thread
     {
         return programCounter + 4;
     }
+
+private:
+    using Clock = std::chrono::steady_clock;
+
+    Clock::time_point startTime = Clock::now();
 };
 
 
