@@ -11,19 +11,37 @@
 namespace riscv
 {
 
+enum class FloatRoundingMode : uint8_t
+{
+    RNE = 0b000,
+    RTZ = 0b001,
+    RDN = 0b010,
+    RUP = 0b011,
+    RMM = 0b100,
+    DYN = 0b111,
+};
+
+struct FloatOp
+{
+    FloatRoundingMode roundingMode;
+    RegisterIndex sourceRegister3;
+};
+
 struct Instruction
 {
-    int32_t immediate = 0;
+    union
+    {
+        int32_t immediate = 0;
+        FloatOp floatOp;
+    };
 
-    uint8_t destinationRegister = 0;
-    uint8_t sourceRegister1 = 0;
-    uint8_t sourceRegister2 = 0;
+    RegisterIndex destinationRegister = 0;
+    RegisterIndex sourceRegister1 = 0;
+    RegisterIndex sourceRegister2 = 0;
 
     // This contains all RV64G instructions
     enum class Type : uint8_t
     {
-        INVALID,
-
         // RV32I Base Instruction Set
         LUI,
         AUIPC,
@@ -205,7 +223,7 @@ struct Instruction
         FCVTDL,
         FCVTDLU,
         FMVDX,
-    } type = Type::INVALID;
+    } type = (Type) 0;
 };
 
 std::vector<Instruction> decodeInstructions(std::span<uint8_t const> program);

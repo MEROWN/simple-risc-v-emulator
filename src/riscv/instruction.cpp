@@ -524,12 +524,19 @@ static void decodeMiscMem(uint32_t encoded, Instruction& instr)
     case 0b000:
         instr.immediate &= 0b1111'1111'1111;
 
-        if (instr.immediate == 0b1000'0011'0011)
+        switch (instr.immediate)
+        {
+        case 0b1000'0011'0011:
             instr.type = Instruction::Type::FENCETSO;
-        else if (instr.immediate == 0b0000'0001'0000)
+            break;
+
+        case 0b0000'0001'0000:
             instr.type = Instruction::Type::PAUSE;
-        else
+            break;
+
+        default:
             instr.type = Instruction::Type::FENCE;
+        }
 
         break;
 
@@ -554,12 +561,18 @@ static void decodeSystem(uint32_t encoded, Instruction& instr)
     switch (funct3)
     {
     case 0b000:
-        if (immediate == 0)
+        switch (immediate)
+        {
+        case 0b0:
             instr.type = Instruction::Type::ECALL;
-        else if (immediate == 1)
+            break;
+        case 0b1:
             instr.type = Instruction::Type::EBREAK;
-        else
+            break;
+
+        default:
             throw UnknownInstructionException(encoded, "SYSTEM");
+        }
         break;
 
     // Zicsr
@@ -636,7 +649,6 @@ static void decodeAMO(uint32_t encoded, Instruction& instr)
         default:
             throw UnknownInstructionException(encoded, "AMO");
         }
-
         break;
 
     // RV64A
@@ -679,7 +691,6 @@ static void decodeAMO(uint32_t encoded, Instruction& instr)
         default:
             throw UnknownInstructionException(encoded, "AMO");
         }
-
         break;
 
     default:
@@ -733,10 +744,231 @@ static void decodeStoreFP(uint32_t encoded, Instruction& instr)
     }
 }
 
+static void decodeFPFusedMultiplyAdd(uint32_t encoded, Opcode opcode, Instruction& instr)
+{
+    uint8_t funct3, funct7;
+    readFieldsR(encoded, instr, funct3, funct7);
+
+    instr.floatOp.roundingMode = static_cast<FloatRoundingMode>(funct3);
+    instr.floatOp.sourceRegister3 = funct7 >> 2;
+    uint8_t funct2 = funct7 & 0b11;
+
+    switch (funct2)
+    {
+    case 0b00:
+        switch (opcode)
+        {
+        case Opcode::MAdd:
+            instr.type = Instruction::Type::FMADDS;
+            break;
+
+        case Opcode::MSub:
+            instr.type = Instruction::Type::FMSUBS;
+            break;
+
+        case Opcode::NMAdd:
+            instr.type = Instruction::Type::FNMADDS;
+            break;
+
+        case Opcode::NMSub:
+            instr.type = Instruction::Type::FNMSUBS;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "FP-FUSED-MULTIPLY-ADD");
+        }
+        break;
+
+    // RV32D
+    case 0b01:
+        switch (opcode)
+        {
+        case Opcode::MAdd:
+            instr.type = Instruction::Type::FMADDD;
+            break;
+
+        case Opcode::MSub:
+            instr.type = Instruction::Type::FMSUBD;
+            break;
+
+        case Opcode::NMAdd:
+            instr.type = Instruction::Type::FNMADDD;
+            break;
+
+        case Opcode::NMSub:
+            instr.type = Instruction::Type::FNMSUBD;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "FP-FUSED-MULTIPLY-ADD");
+        }
+        break;
+
+    default:
+        throw UnknownInstructionException(encoded, "FP-FUSED-MULTIPLY-ADD");
+    }
+}
+
+static void decodeOpFP(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3, funct7;
+    readFieldsR(encoded, instr, funct3, funct7);
+
+    // Some OP-FP instructions do not decode a rounding mode.
+    // This is just for simplicity here.
+    instr.floatOp.roundingMode = static_cast<FloatRoundingMode>(funct3);
+
+    switch (funct7)
+    {
+    case 0b0000000:
+        instr.type = Instruction::Type::FADDS;
+        break;
+    case 0b0000100:
+        instr.type = Instruction::Type::FSUBS;
+        break;
+    case 0b0001000:
+        instr.type = Instruction::Type::FMULS;
+        break;
+    case 0b0001100:
+        if (instr.sourceRegister2 == 0)
+            instr.type = Instruction::Type::FSQRTS;
+        else
+            instr.type = Instruction::Type::FDIVS;
+        break;
+
+    case 0b0010000:
+        switch (funct3)
+        {
+        case 0b000:
+            instr.type = Instruction::Type::FSGNJS;
+            break;
+        case 0b001:
+            instr.type = Instruction::Type::FSGNJNS;
+            break;
+        case 0b010:
+            instr.type = Instruction::Type::FSGNJXS;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    case 0b0010100:
+        switch (funct3)
+        {
+        case 0b000:
+            instr.type = Instruction::Type::FMINS;
+            break;
+        case 0b001:
+            instr.type = Instruction::Type::FMAXS;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    case 0b1100000:
+        switch (instr.sourceRegister2)
+        {
+        case 0b00000:
+            instr.type = Instruction::Type::FCVTWS;
+            break;
+        case 0b00001:
+            instr.type = Instruction::Type::FCVTWUS;
+            break;
+
+        // RV64F
+        case 0b00010:
+            instr.type = Instruction::Type::FCVTLS;
+            break;
+        case 0b00011:
+            instr.type = Instruction::Type::FCVTLUS;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    case 0b1110000:
+        switch (funct3)
+        {
+        case 0b000:
+            instr.type = Instruction::Type::FMVXW;
+            break;
+        case 0b001:
+            instr.type = Instruction::Type::FCLASSS;
+            break;
+
+        default:
+            throw new UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    case 0b1010000:
+        switch (funct3)
+        {
+        case 0b010:
+            instr.type = Instruction::Type::FEQS;
+            break;
+        case 0b001:
+            instr.type = Instruction::Type::FLTS;
+            break;
+        case 0b000:
+            instr.type = Instruction::Type::FLES;
+            break;
+        default:
+            throw UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    case 0b1101000:
+        switch (instr.sourceRegister2)
+        {
+        case 0b00000:
+            instr.type = Instruction::Type::FCVTSW;
+            break;
+        case 0b00001:
+            instr.type = Instruction::Type::FCVTSWU;
+            break;
+
+        // RV64F
+        case 0b00010:
+            instr.type = Instruction::Type::FCVTSL;
+            break;
+        case 0b00011:
+            instr.type = Instruction::Type::FCVTSLU;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    case 0b1111000:
+        switch (funct3)
+        {
+        case 0b000:
+            instr.type = Instruction::Type::FMVWX;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    default:
+        throw UnknownInstructionException(encoded, "OP-FP");
+    }
+}
+
 
 static void decodeInstruction(Instruction& instr, uint32_t encoded)
 {
-    switch (getOpcode(encoded))
+    auto opcode = getOpcode(encoded);
+    switch (opcode)
     {
     case Opcode::LUI:
         readFieldsU(encoded, instr);
@@ -807,6 +1039,17 @@ static void decodeInstruction(Instruction& instr, uint32_t encoded)
 
     case Opcode::StoreFP:
         decodeStoreFP(encoded, instr);
+        break;
+
+    case Opcode::MAdd:
+    case Opcode::MSub:
+    case Opcode::NMAdd:
+    case Opcode::NMSub:
+        decodeFPFusedMultiplyAdd(encoded, opcode, instr);
+        break;
+
+    case Opcode::OpFP:
+        decodeOpFP(encoded, instr);
         break;
 
     default:
