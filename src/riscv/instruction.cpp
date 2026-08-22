@@ -74,19 +74,19 @@ static RegisterIndex getSourceRegister2(uint32_t encoded)
 }
 
 /** Gets the immediate value for an I-type instruction. */
-static uint32_t getImmediateI(uint32_t encoded)
+static int32_t getImmediateI(uint32_t encoded)
 {
     return signExtend(getBits(encoded, 20, 31), 11);
 }
 
 /** Gets the immediate value for an S-type instruction. */
-static uint32_t getImmediateS(uint32_t encoded)
+static int32_t getImmediateS(uint32_t encoded)
 {
     return signExtend(getBits(encoded, 7, 11) | (getBits(encoded, 25, 31) << 5), 11);
 }
 
 /** Gets the immediate value for a B-type instruction. */
-static uint32_t getImmediateB(uint32_t encoded)
+static int32_t getImmediateB(uint32_t encoded)
 {
     return signExtend(
         (getBits(encoded, 8, 11) << 1) | (getBits(encoded, 25, 30) << 5)
@@ -96,13 +96,13 @@ static uint32_t getImmediateB(uint32_t encoded)
 }
 
 /** Gets the immediate value for an U-type instruction. */
-static uint32_t getImmediateU(uint32_t encoded)
+static int32_t getImmediateU(uint32_t encoded)
 {
-    return getBits(encoded, 12, 31) << 12;
+    return static_cast<int32_t>(getBits(encoded, 12, 31) << 12);
 }
 
 /** Gets the immediate value for an J-type instruction. */
-static uint32_t getImmediateJ(uint32_t encoded)
+static int32_t getImmediateJ(uint32_t encoded)
 {
     return signExtend(
         (getBits(encoded, 21, 30) << 1) | (getBits(encoded, 20, 20) << 11)

@@ -13,22 +13,54 @@ namespace riscv
 {
 
 
+/** Holds the state of a RISC-V hart (HARdware Thread) */
+class Thread
+{
+public:
+    Register getRegister(uint8_t registerIndex) const
+    {
+        return registers[registerIndex];
+    }
+
+    void setRegister(uint8_t registerIndex, Register value)
+    {
+        if (registerIndex != 0)
+            registers[registerIndex] = value;
+    }
+
+    Pointer getInstructionIndex() const
+    {
+        return programCounter / 4;
+    }
+
+private:
+    std::array<Register, registerCount> registers {};
+
+    /** This is semantically a pointer into the original program bytes.
+        Every instruction increments this by 4. */
+    Register programCounter = 0;
+
+    Pointer getNextProgramCounter() const
+    {
+        return programCounter + 4;
+    }
+
+    friend class Emulator;
+};
+
+
 class Emulator
 {
 public:
     Emulator();
     ~Emulator();
 
-    void run();
+    void run(Thread& thread);
 
+    /** The returned span remains valid as long as the memory is not resized. */
     std::span<uint8_t> getMemory()
     {
         return memory;
-    }
-
-    std::array<Register, registerCount> const& getRegisters()
-    {
-        return registers;
     }
 
     /** This may invalidate all previously acquired memory spans. */
@@ -43,7 +75,7 @@ public:
         instructions = std::move(newInstructions);
     }
 
-    /** This validates & decodes the provided program and loads it into the emulator. */
+    /** This validates and decodes the provided program and loads it into the emulator. */
     void loadInstructions(std::span<uint8_t const> program)
     {
         setInstructions(decodeInstructions(program));
@@ -51,18 +83,8 @@ public:
 
 
 private:
-    std::array<Register, registerCount> registers {};
-    std::vector<Instruction> instructions {};
     std::vector<uint8_t> memory {};
-    Register programCounter = 0;
-    void writeRegister(uint8_t registerIndex, Register value)
-    {
-        if (registerIndex == 0)
-        {
-            return;
-        }
-        registers[registerIndex] = value;
-    }
+    std::vector<Instruction> instructions {};
 };
 
 

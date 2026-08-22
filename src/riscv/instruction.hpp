@@ -13,7 +13,7 @@ namespace riscv
 
 struct Instruction
 {
-    uint32_t immediate = 0;
+    int32_t immediate = 0;
 
     uint8_t destinationRegister = 0;
     uint8_t sourceRegister1 = 0;

@@ -1,4 +1,5 @@
 #include <src/riscv/emulator.hpp>
+
 #include <stdexcept>
 
 
@@ -14,79 +15,91 @@ Emulator::~Emulator()
 {
 }
 
-void Emulator::run()
+void Emulator::run(Thread& t)
 {
     // TODO(Danil) instruction execution loop
-    while (programCounter < instructions.size())
+    while (t.getInstructionIndex() < instructions.size())
     {
-        Instruction const& inst = instructions[programCounter];
-        switch (inst.type)
+        Instruction instr = instructions[t.getInstructionIndex()];
+
+        switch (instr.type)
         {
         case Instruction::Type::LUI:
-            writeRegister(inst.destinationRegister, inst.immediate);
+            t.setRegister(instr.destinationRegister, instr.immediate);
             break;
+
         case Instruction::Type::AUIPC:
-            writeRegister(inst.destinationRegister, programCounter + inst.immediate);
+            t.setRegister(instr.destinationRegister, t.programCounter + instr.immediate);
             break;
+
         case Instruction::Type::JAL:
-            writeRegister(inst.destinationRegister, programCounter);
-            programCounter += inst.immediate;
+            t.setRegister(instr.destinationRegister, t.getNextProgramCounter());
+            t.programCounter += instr.immediate;
             continue;
+
         case Instruction::Type::JALR:
         {
-            Register programCounterTemp = (registers[inst.sourceRegister1] + inst.immediate) & ~1;
-            writeRegister(inst.destinationRegister, programCounter);
-            programCounter = programCounterTemp;
+            t.setRegister(instr.destinationRegister, t.getNextProgramCounter());
+            t.programCounter = t.getRegister(instr.sourceRegister1) + instr.immediate;
+            t.programCounter &= ~0b1;
             continue;
         }
+
         case Instruction::Type::BEQ:
-            if (registers[inst.sourceRegister1] == registers[inst.sourceRegister2])
+            if (t.getRegister(instr.sourceRegister1) == t.getRegister(instr.sourceRegister2))
             {
-                programCounter += inst.immediate;
+                t.programCounter += instr.immediate;
                 continue;
             }
             break;
+
         case Instruction::Type::BNE:
-            if (registers[inst.sourceRegister1] != registers[inst.sourceRegister2])
+            if (t.getRegister(instr.sourceRegister1) != t.getRegister(instr.sourceRegister2))
             {
-                programCounter += inst.immediate;
+                t.programCounter += instr.immediate;
                 continue;
             }
             break;
+
         case Instruction::Type::BLT:
-            if (static_cast<int64_t>(registers[inst.sourceRegister1])
-                < static_cast<int64_t>(registers[inst.sourceRegister2]))
+            if (static_cast<int64_t>(t.getRegister(instr.sourceRegister1))
+                < static_cast<int64_t>(t.getRegister(instr.sourceRegister2)))
             {
-                programCounter += inst.immediate;
+                t.programCounter += instr.immediate;
                 continue;
             }
             break;
+
         case Instruction::Type::BGE:
-            if (static_cast<int64_t>(registers[inst.sourceRegister1])
-                >= static_cast<int64_t>(registers[inst.sourceRegister2]))
+            if (static_cast<int64_t>(t.getRegister(instr.sourceRegister1))
+                >= static_cast<int64_t>(t.getRegister(instr.sourceRegister2)))
             {
-                programCounter += inst.immediate;
+                t.programCounter += instr.immediate;
                 continue;
             }
             break;
+
         case Instruction::Type::BLTU:
-            if ((registers[inst.sourceRegister1]) < (registers[inst.sourceRegister2]))
+            if (t.getRegister(instr.sourceRegister1) < t.getRegister(instr.sourceRegister2))
             {
-                programCounter += inst.immediate;
+                t.programCounter += instr.immediate;
                 continue;
             }
             break;
+
         case Instruction::Type::BGEU:
-            if ((registers[inst.sourceRegister1]) >= (registers[inst.sourceRegister2]))
+            if (t.getRegister(instr.sourceRegister1) >= t.getRegister(instr.sourceRegister2))
             {
-                programCounter += inst.immediate;
+                t.programCounter += instr.immediate;
                 continue;
             }
             break;
+
         default:
             throw std::runtime_error("Unsupported instruction");
         }
-        programCounter += 1;
+
+        t.programCounter = t.getNextProgramCounter();
     }
 }
 

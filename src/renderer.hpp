@@ -17,20 +17,20 @@ public:
         This matches the endianness of RISC-V (which is little-endian). */
     using Pixel = uint32_t;
 
-    Renderer(std::string const& title, int framebufferWidth, int framebufferHeight);
+    Renderer(std::string const& title, uint32_t framebufferWidth, uint32_t framebufferHeight);
 
     ~Renderer();
 
-    void clear();
+    void presentEmptyFrame();
 
-    void renderFramebuffer(std::span<Pixel> framebuffer);
+    void presentFramebuffer(std::span<Pixel> framebuffer);
 
 private:
     SDL_Window *window = nullptr;
     SDL_Renderer *renderer = nullptr;
     SDL_Texture *texture = nullptr;
-    int framebufferWidth;
-    int framebufferHeight;
+    uint32_t framebufferWidth;
+    uint32_t framebufferHeight;
 };
 
 

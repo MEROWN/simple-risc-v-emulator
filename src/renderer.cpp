@@ -3,17 +3,18 @@
 #include <stdexcept>
 
 
-Renderer::Renderer(std::string const& title, int framebufferWidth, int framebufferHeight)
+Renderer::Renderer(std::string const& title, uint32_t framebufferWidth, uint32_t framebufferHeight)
     : framebufferWidth { framebufferWidth }, framebufferHeight { framebufferHeight }
 {
-    window = SDL_CreateWindow(
-        title.c_str(), framebufferWidth, framebufferHeight, SDL_WINDOW_RESIZABLE
-    );
+    int w = static_cast<int>(framebufferWidth);
+    int h = static_cast<int>(framebufferHeight);
+
+    window = SDL_CreateWindow(title.c_str(), w, h, SDL_WINDOW_RESIZABLE);
 
     if (!window)
         throw std::runtime_error { "failed to create SDL window" };
 
-    SDL_SetWindowMinimumSize(window, framebufferWidth, framebufferHeight);
+    SDL_SetWindowMinimumSize(window, w, h);
 
     renderer = SDL_CreateRenderer(window, nullptr);
 
@@ -24,11 +25,7 @@ Renderer::Renderer(std::string const& title, int framebufferWidth, int framebuff
 
     // SDL_PIXELFORMAT_BGRA32 is ARGB32LE, it does not depend on machine endianness.
     texture = SDL_CreateTexture(
-        renderer,
-        SDL_PIXELFORMAT_BGRA32,
-        SDL_TEXTUREACCESS_STREAMING,
-        framebufferWidth,
-        framebufferHeight
+        renderer, SDL_PIXELFORMAT_BGRA32, SDL_TEXTUREACCESS_STREAMING, w, h
     );
 
     if (!texture)
@@ -44,16 +41,16 @@ Renderer::~Renderer()
     SDL_DestroyWindow(window);
 }
 
-void Renderer::clear()
+void Renderer::presentEmptyFrame()
 {
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);
     SDL_RenderClear(renderer);
     SDL_RenderPresent(renderer);
 }
 
-void Renderer::renderFramebuffer(std::span<Pixel> framebuffer)
+void Renderer::presentFramebuffer(std::span<Pixel> framebuffer)
 {
-    int framebufferPitch = framebufferWidth * (int) sizeof(Pixel);
+    int framebufferPitch = static_cast<int>(framebufferWidth * sizeof(Pixel));
     SDL_UpdateTexture(texture, nullptr, framebuffer.data(), framebufferPitch);
 
     SDL_SetRenderDrawColor(renderer, 0x00, 0x00, 0x00, 0xff);

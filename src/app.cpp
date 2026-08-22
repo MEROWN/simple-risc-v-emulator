@@ -5,14 +5,14 @@
 #include <fstream>
 
 
-static std::vector<riscv::Byte> readProgramFile(std::string const& path)
+static std::vector<uint8_t> readProgramFile(std::string const& path)
 {
     std::ifstream file { path, std::ios::binary };
 
     if (!file.is_open())
         throw std::runtime_error { "failed to open program file" };
 
-    return std::vector<riscv::Byte> {
+    return std::vector<uint8_t> {
         std::istreambuf_iterator<char>(file),
         std::istreambuf_iterator<char>(),
     };
@@ -22,12 +22,13 @@ static std::vector<riscv::Byte> readProgramFile(std::string const& path)
 App::App(std::span<char *> args)
     : options { Options::parse(args) },
       emulator {},
+      mainThread {},
       renderer { "RISC-V Emulator", options.framebufferWidth, options.framebufferHeight }
 {
     emulator.loadInstructions(readProgramFile(options.programPath));
     emulator.resizeMemory(getFramebufferSize() + options.freeMemorySize);
 
-    renderer.clear();
+    renderer.presentEmptyFrame();
 }
 
 
@@ -48,8 +49,8 @@ std::span<Renderer::Pixel> App::getFramebuffer()
 
 void App::tick()
 {
-    emulator.run();
-    renderer.renderFramebuffer(getFramebuffer());
+    emulator.run(mainThread);
+    renderer.presentFramebuffer(getFramebuffer());
 }
 
 void App::handleKey(SDL_Keycode keyCode, bool isKeyDown)

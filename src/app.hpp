@@ -23,6 +23,7 @@ public:
 private:
     Options options;
     riscv::Emulator emulator;
+    riscv::Thread mainThread;
     Renderer renderer;
 
     size_t getFramebufferSize();
