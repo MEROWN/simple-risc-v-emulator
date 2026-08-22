@@ -27,10 +27,10 @@ enum class Opcode : uint8_t
     Op = 0b0110011,
     LUI = 0b0110111,
     Op32 = 0b0111011,
-    Madd = 0b1000011,
-    Msub = 0b1000111,
-    Nmsub = 0b1001011,
-    Nmadc = 0b1001111,
+    MAdd = 0b1000011,
+    MSub = 0b1000111,
+    NMSub = 0b1001011,
+    NMAdd = 0b1001111,
     OpFP = 0b1010011,
     OpV = 0b1010111,
     Branch = 0b1100011,
@@ -363,14 +363,9 @@ static void decodeOp(uint32_t encoded, Instruction& instr)
         {
         case 0b000:
             if (hasBit(funct7, 5))
-            {
-                clearBit(funct7, 5);
                 instr.type = Instruction::Type::SUB;
-            }
             else
-            {
                 instr.type = Instruction::Type::ADD;
-            }
             break;
 
         case 0b001:
@@ -391,14 +386,9 @@ static void decodeOp(uint32_t encoded, Instruction& instr)
 
         case 0b101:
             if (hasBit(funct7, 5))
-            {
-                clearBit(funct7, 5);
                 instr.type = Instruction::Type::SRA;
-            }
             else
-            {
                 instr.type = Instruction::Type::SRL;
-            }
             break;
 
         case 0b110:
@@ -467,14 +457,9 @@ static void decodeOp32(uint32_t encoded, Instruction& instr)
         {
         case 0b000:
             if (hasBit(funct7, 5))
-            {
-                clearBit(funct7, 5);
                 instr.type = Instruction::Type::SUBW;
-            }
             else
-            {
                 instr.type = Instruction::Type::ADDW;
-            }
             break;
 
         case 0b001:
@@ -483,14 +468,9 @@ static void decodeOp32(uint32_t encoded, Instruction& instr)
 
         case 0b101:
             if (hasBit(funct7, 5))
-            {
-                clearBit(funct7, 5);
                 instr.type = Instruction::Type::SRAW;
-            }
             else
-            {
                 instr.type = Instruction::Type::SRLW;
-            }
             break;
 
         default:
@@ -708,6 +688,52 @@ static void decodeAMO(uint32_t encoded, Instruction& instr)
 }
 
 
+static void decodeLoadFP(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3;
+    readFieldsI(encoded, instr, funct3);
+
+    switch (funct3)
+    {
+    // RV32F
+    case 0b010:
+        instr.type = Instruction::Type::FLW;
+        break;
+
+    // RV32D
+    case 0b011:
+        instr.type = Instruction::Type::FLD;
+        break;
+
+    default:
+        throw UnknownInstructionException(encoded, "LOAD-FP");
+    }
+}
+
+
+static void decodeStoreFP(uint32_t encoded, Instruction& instr)
+{
+    uint8_t funct3;
+    readFieldsS(encoded, instr, funct3);
+
+    switch (funct3)
+    {
+    // RV32F
+    case 0b010:
+        instr.type = Instruction::Type::FSW;
+        break;
+
+    // RV32D
+    case 0b011:
+        instr.type = Instruction::Type::FSD;
+        break;
+
+    default:
+        throw UnknownInstructionException(encoded, "STORE-FP");
+    }
+}
+
+
 static void decodeInstruction(Instruction& instr, uint32_t encoded)
 {
     switch (getOpcode(encoded))
@@ -773,6 +799,14 @@ static void decodeInstruction(Instruction& instr, uint32_t encoded)
 
     case Opcode::AMO:
         decodeAMO(encoded, instr);
+        break;
+
+    case Opcode::LoadFP:
+        decodeLoadFP(encoded, instr);
+        break;
+
+    case Opcode::StoreFP:
+        decodeStoreFP(encoded, instr);
         break;
 
     default:
