@@ -21,18 +21,19 @@ enum class FloatRoundingMode : uint8_t
     DYN = 0b111,
 };
 
-struct FloatOp
-{
-    FloatRoundingMode roundingMode;
-    RegisterIndex sourceRegister3;
-};
 
 struct Instruction
 {
+    struct FloatOperationParams
+    {
+        FloatRoundingMode roundingMode;
+        RegisterIndex sourceRegister3;
+    };
+
     union
     {
         int32_t immediate = 0;
-        FloatOp floatOp;
+        FloatOperationParams floatOp;
     };
 
     RegisterIndex destinationRegister = 0;
@@ -171,21 +172,21 @@ struct Instruction
         FSGNJXS,
         FMINS,
         FMAXS,
-        FCVTWS,
-        FCVTWUS,
-        FMVXW,
         FEQS,
         FLTS,
         FLES,
         FCLASSS,
+        FCVTWS,
         FCVTSW,
+        FCVTWUS,
         FCVTSWU,
+        FMVXW,
         FMVWX,
 
         // RV64F Standard Extension
         FCVTLS,
-        FCVTLUS,
         FCVTSL,
+        FCVTLUS,
         FCVTSLU,
 
         // RV32D Standard Extension
@@ -205,23 +206,23 @@ struct Instruction
         FSGNJXD,
         FMIND,
         FMAXD,
-        FCVTSD,
-        FCVTDS,
         FEQD,
         FLTD,
         FLED,
         FCLASSD,
+        FCVTSD,
+        FCVTDS,
         FCVTWD,
-        FCVTWUD,
         FCVTDW,
+        FCVTWUD,
         FCVTDWU,
 
         // RV64D Standard Extension
         FCVTLD,
-        FCVTLUD,
-        FCVTXD,
         FCVTDL,
+        FCVTLUD,
         FCVTDLU,
+        FMVXD,
         FMVDX,
     } type = (Type) 0;
 };

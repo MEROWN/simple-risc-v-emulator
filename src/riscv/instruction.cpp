@@ -818,35 +818,38 @@ static void decodeOpFP(uint32_t encoded, Instruction& instr)
     // This is just for simplicity here.
     instr.floatOp.roundingMode = static_cast<FloatRoundingMode>(funct3);
 
+    bool isSingle = !hasBit(funct7, 0); // Indicates single (S) precision
+    clearBit(funct7, 0);
+
     switch (funct7)
     {
     case 0b0000000:
-        instr.type = Instruction::Type::FADDS;
+        instr.type = isSingle ? Instruction::Type::FADDS : Instruction::Type::FADDD;
         break;
     case 0b0000100:
-        instr.type = Instruction::Type::FSUBS;
+        instr.type = isSingle ? Instruction::Type::FSUBS : Instruction::Type::FSUBD;
         break;
     case 0b0001000:
-        instr.type = Instruction::Type::FMULS;
+        instr.type = isSingle ? Instruction::Type::FMULS : Instruction::Type::FMULD;
         break;
     case 0b0001100:
         if (instr.sourceRegister2 == 0)
-            instr.type = Instruction::Type::FSQRTS;
+            instr.type = isSingle ? Instruction::Type::FSQRTS : Instruction::Type::FSQRTD;
         else
-            instr.type = Instruction::Type::FDIVS;
+            instr.type = isSingle ? Instruction::Type::FDIVS : Instruction::Type::FDIVD;
         break;
 
     case 0b0010000:
         switch (funct3)
         {
         case 0b000:
-            instr.type = Instruction::Type::FSGNJS;
+            instr.type = isSingle ? Instruction::Type::FSGNJS : Instruction::Type::FSGNJD;
             break;
         case 0b001:
-            instr.type = Instruction::Type::FSGNJNS;
+            instr.type = isSingle ? Instruction::Type::FSGNJNS : Instruction::Type::FSGNJND;
             break;
         case 0b010:
-            instr.type = Instruction::Type::FSGNJXS;
+            instr.type = isSingle ? Instruction::Type::FSGNJXS : Instruction::Type::FSGNJXD;
             break;
 
         default:
@@ -858,10 +861,22 @@ static void decodeOpFP(uint32_t encoded, Instruction& instr)
         switch (funct3)
         {
         case 0b000:
-            instr.type = Instruction::Type::FMINS;
+            instr.type = isSingle ? Instruction::Type::FMINS : Instruction::Type::FMIND;
             break;
         case 0b001:
-            instr.type = Instruction::Type::FMAXS;
+            instr.type = isSingle ? Instruction::Type::FMAXS : Instruction::Type::FMAXD;
+            break;
+
+        default:
+            throw UnknownInstructionException(encoded, "OP-FP");
+        }
+        break;
+
+    case 0b0100000:
+        switch (instr.sourceRegister2)
+        {
+        case 0b00001:
+            instr.type = isSingle ? Instruction::Type::FCVTSD : Instruction::Type::FCVTDS;
             break;
 
         default:
@@ -873,18 +888,16 @@ static void decodeOpFP(uint32_t encoded, Instruction& instr)
         switch (instr.sourceRegister2)
         {
         case 0b00000:
-            instr.type = Instruction::Type::FCVTWS;
+            instr.type = isSingle ? Instruction::Type::FCVTWS : Instruction::Type::FCVTWD;
             break;
         case 0b00001:
-            instr.type = Instruction::Type::FCVTWUS;
+            instr.type = isSingle ? Instruction::Type::FCVTWUS : Instruction::Type::FCVTWUD;
             break;
-
-        // RV64F
         case 0b00010:
-            instr.type = Instruction::Type::FCVTLS;
+            instr.type = isSingle ? Instruction::Type::FCVTLS : Instruction::Type::FCVTLD;
             break;
         case 0b00011:
-            instr.type = Instruction::Type::FCVTLUS;
+            instr.type = isSingle ? Instruction::Type::FCVTLUS : Instruction::Type::FCVTLUD;
             break;
 
         default:
@@ -896,10 +909,10 @@ static void decodeOpFP(uint32_t encoded, Instruction& instr)
         switch (funct3)
         {
         case 0b000:
-            instr.type = Instruction::Type::FMVXW;
+            instr.type = isSingle ? Instruction::Type::FMVXW : Instruction::Type::FMVXD;
             break;
         case 0b001:
-            instr.type = Instruction::Type::FCLASSS;
+            instr.type = isSingle ? Instruction::Type::FCLASSS : Instruction::Type::FCLASSD;
             break;
 
         default:
@@ -911,13 +924,13 @@ static void decodeOpFP(uint32_t encoded, Instruction& instr)
         switch (funct3)
         {
         case 0b010:
-            instr.type = Instruction::Type::FEQS;
+            instr.type = isSingle ? Instruction::Type::FEQS : Instruction::Type::FEQD;
             break;
         case 0b001:
-            instr.type = Instruction::Type::FLTS;
+            instr.type = isSingle ? Instruction::Type::FLTS : Instruction::Type::FLTD;
             break;
         case 0b000:
-            instr.type = Instruction::Type::FLES;
+            instr.type = isSingle ? Instruction::Type::FLES : Instruction::Type::FLED;
             break;
         default:
             throw UnknownInstructionException(encoded, "OP-FP");
@@ -928,18 +941,17 @@ static void decodeOpFP(uint32_t encoded, Instruction& instr)
         switch (instr.sourceRegister2)
         {
         case 0b00000:
-            instr.type = Instruction::Type::FCVTSW;
+            instr.type = isSingle ? Instruction::Type::FCVTSW : Instruction::Type::FCVTDW;
             break;
         case 0b00001:
-            instr.type = Instruction::Type::FCVTSWU;
+            instr.type = isSingle ? Instruction::Type::FCVTSWU : Instruction::Type::FCVTDWU;
             break;
 
-        // RV64F
         case 0b00010:
-            instr.type = Instruction::Type::FCVTSL;
+            instr.type = isSingle ? Instruction::Type::FCVTSL : Instruction::Type::FCVTDL;
             break;
         case 0b00011:
-            instr.type = Instruction::Type::FCVTSLU;
+            instr.type = isSingle ? Instruction::Type::FCVTSLU : Instruction::Type::FCVTDLU;
             break;
 
         default:
@@ -951,7 +963,7 @@ static void decodeOpFP(uint32_t encoded, Instruction& instr)
         switch (funct3)
         {
         case 0b000:
-            instr.type = Instruction::Type::FMVWX;
+            instr.type = isSingle ? Instruction::Type::FMVWX : Instruction::Type::FMVDX;
             break;
 
         default:
