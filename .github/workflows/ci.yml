@@ -17,6 +17,12 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
+      - name: Install and cache system dependencies
+        uses: awalsh128/cache-apt-pkgs-action@v1.6.3
+        with:
+          version: 1.0
+          packages: autoconf autoconf-archive automake libtool
+
       - name: Set VCPKG_ROOT
         run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
 
