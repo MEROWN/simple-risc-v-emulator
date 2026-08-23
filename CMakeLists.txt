@@ -1,15 +1,17 @@
 cmake_minimum_required(VERSION 3.20)
 
-project(simple-risc-v-emulator VERSION 1.0.0 LANGUAGES CXX)
+option(SIMPLE_RISCV_EMU_BUILD_TESTS "Build tests" OFF)
+option(SIMPLE_RISCV_EMU_BUILD_APP "Build the graphical application" ON)
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+if(SIMPLE_RISCV_EMU_BUILD_APP)
+    list(APPEND VCPKG_MANIFEST_FEATURES "app")
+endif()
+
+if(SIMPLE_RISCV_EMU_BUILD_TESTS)
     list(APPEND VCPKG_MANIFEST_FEATURES "tests")
 endif()
 
-if(NOT DEFINED ENV{VCPKG_ROOT})
-    message(FATAL_ERROR "VCPKG_ROOT is not defined! Install vcpkg properly!")
-endif()
-include("$ENV{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake")
+project(simple-riscv-emulator VERSION 1.0.0 LANGUAGES CXX)
 
 set(CMAKE_CXX_STANDARD 20)
 set(CMAKE_CXX_STANDARD_REQUIRED ON)
@@ -22,10 +24,6 @@ else()
 endif()
 
 
-find_package(SDL3 CONFIG REQUIRED)
-find_package(argparse CONFIG REQUIRED)
-
-
 add_library(riscv-emu-lib STATIC)
 target_include_directories(riscv-emu-lib PUBLIC ".")
 target_sources(riscv-emu-lib
@@ -36,26 +34,30 @@ target_sources(riscv-emu-lib
 )
 
 
-add_executable(riscv-emu)
+if(SIMPLE_RISCV_EMU_BUILD_APP)
+    find_package(SDL3 CONFIG REQUIRED)
+    find_package(argparse CONFIG REQUIRED)
 
-target_include_directories(riscv-emu PRIVATE ".")
+    add_executable(riscv-emu)
 
-target_link_libraries(riscv-emu
-    PRIVATE riscv-emu-lib SDL3::SDL3 argparse::argparse
-)
+    target_include_directories(riscv-emu PRIVATE ".")
 
-target_sources(riscv-emu
-    PRIVATE
-        "src/main.cpp"
-        "src/app.cpp"
-        "src/options.cpp"
-        "src/renderer.cpp"
-)
+    target_link_libraries(riscv-emu
+        PRIVATE riscv-emu-lib SDL3::SDL3 argparse::argparse
+    )
 
-install(TARGETS riscv-emu RUNTIME DESTINATION bin)
+    target_sources(riscv-emu
+        PRIVATE
+            "src/main.cpp"
+            "src/app.cpp"
+            "src/options.cpp"
+            "src/renderer.cpp"
+    )
 
+    install(TARGETS riscv-emu RUNTIME DESTINATION bin)
+endif()
 
-if(CMAKE_PROJECT_NAME STREQUAL PROJECT_NAME AND BUILD_TESTING)
+if(SIMPLE_RISCV_EMU_BUILD_TESTS)
     enable_testing()
     find_package(GTest CONFIG REQUIRED)
 

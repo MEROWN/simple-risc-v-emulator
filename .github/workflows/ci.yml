@@ -17,19 +17,15 @@ jobs:
     steps:
       - uses: actions/checkout@v3
 
-      - name: Install and cache system dependencies
-        uses: awalsh128/cache-apt-pkgs-action@v1.6.3
-        with:
-          version: 1.0
-          packages: autoconf autoconf-archive automake libtool
+      - name: Configure
+        run: >
+          cmake -B ./build/
+            -D SIMPLE_RISCV_EMU_BUILD_TESTS=ON
+            -D SIMPLE_RISCV_EMU_BUILD_APP=OFF
+            -D CMAKE_BUILD_TYPE=RelWithDebInfo
+            -D CMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
 
-      - name: Set VCPKG_ROOT
-        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
-
-      - name: Install project dependencies and configure
-        run: cmake -B ./build/ -D BUILD_TESTING=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo
-
-      - name: Compile
+      - name: Build
         run: cmake --build ./build/
 
       - name: Run tests

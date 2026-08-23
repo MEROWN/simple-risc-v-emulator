@@ -4,11 +4,14 @@
     "description": "A simple RISC-V emulator with graphical capabilities",
     "homepage": "https://github.com/MEROWN/simple-risc-v-emulator",
     "license": "GPL-3.0-only",
-    "dependencies": [
-        "sdl3",
-        "argparse"
-    ],
     "features": {
+        "app": {
+            "description": "Graphical emulator app",
+            "dependencies": [
+                "sdl3",
+                "argparse"
+            ]
+        },
         "tests": {
             "description": "Development tests",
             "dependencies": [

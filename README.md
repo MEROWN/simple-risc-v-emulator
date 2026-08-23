@@ -13,41 +13,33 @@ Milestones:
 ## Build & run
 
 1. Install [vcpkg](https://learn.microsoft.com/en-us/vcpkg/get_started/get-started),
-   CMake 3.20+, and a C++20-capable compiler toolchain.
-   Ensure that the `VCPKG_ROOT` environment variable is defined and contains
-   your vcpkg installation path.
+    CMake 3.20+, and a C++20 compiler.
 2. Run:
-   ```sh
-   cmake -B ./build/ -D CMAKE_BUILD_TYPE=Release
-   cmake --build ./build/ --config Release
-   cmake --install ./build/ --prefix ./
-   ```
+    ```sh
+    cmake -B ./build/ -D CMAKE_BUILD_TYPE=Release -D CMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+    cmake --build ./build/ --config Release
+    cmake --install ./build/ --prefix ./
+    ```
 3. Run the program:
-   ```sh
-   bin/riscv-emu
-   ```
+    ```sh
+    bin/riscv-emu path/to/program
+    ```
 
 ### Development setup
 
-This applies for project development only!
-
-```sh
-cmake -B ./build/ -D CMAKE_BUILD_TYPE=Debug -D CMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build ./build/
-```
-
-Then run the program in the `build` directory.
-
-### Test setup
-
-```sh
-cmake -B ./build/ -D BUILD_TESTING=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo
-cmake --build ./build/
-```
-
-Of course, `RelWithDebInfo` is not the only configuration you can or should use.
-
-To run the tests:
-```sh
-ctest --test-dir ./build/ --output-on-failure
-```
+1. Run this once to set up the build:
+    ```sh
+    cmake -B ./build/  -D SIMPLE_RISCV_EMU_BUILD_TESTS=ON -D CMAKE_BUILD_TYPE=Debug -D CMAKE_EXPORT_COMPILE_COMMANDS=ON -D CMAKE_TOOLCHAIN_FILE=$VCPKG_ROOT/scripts/buildsystems/vcpkg.cmake
+    ```
+2. Build:
+    ```sh
+    cmake --build ./build/
+    ```
+3. Run the app:
+    ```sh
+    build/riscv-emu path/to/program
+    ```
+4. Run the tests:
+    ```sh
+    build/tests
+    ```
