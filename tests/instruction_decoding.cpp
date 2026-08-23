@@ -260,3 +260,66 @@ TEST(InstructionDecoding, atomicInstructions)
     decode(i, 0b00010'00'00000'00000'011'00000'0101111);
     EXPECT_EQ(i.type, Instruction::Type::LRD);
 }
+
+TEST(InstructionDecoding, floatingPointInstructions)
+{
+    Instruction i;
+
+    decode(i, 0b0000000'00000'00000'010'00000'0000111);
+    EXPECT_EQ(i.type, Instruction::Type::FLW);
+
+    decode(i, 0b0000000'00000'00000'010'00000'0100111);
+    EXPECT_EQ(i.type, Instruction::Type::FSW);
+
+    decode(i, 0b00000'00'00000'00000'000'00000'1000011);
+    EXPECT_EQ(i.type, Instruction::Type::FMADDS);
+
+    decode(i, 0b00000'00'00000'00000'000'00000'1000111);
+    EXPECT_EQ(i.type, Instruction::Type::FMSUBS);
+
+    decode(i, 0b00000'00'00000'00000'000'00000'1001111);
+    EXPECT_EQ(i.type, Instruction::Type::FNMADDS);
+
+    decode(i, 0b00000'00'00000'00000'000'00001'1001011);
+    EXPECT_EQ(i.type, Instruction::Type::FNMSUBS);
+
+    decode(i, 0b0000000'00000'00000'000'00000'1010011);
+    EXPECT_EQ(i.type, Instruction::Type::FADDS);
+
+    decode(i, 0b0000100'00000'00000'000'00000'1010011);
+    EXPECT_EQ(i.type, Instruction::Type::FSUBS);
+
+    decode(i, 0b1100000'00010'00000'000'00000'1010011);
+    EXPECT_EQ(i.type, Instruction::Type::FCVTLS);
+
+    decode(i, 0b1100000'00011'00000'000'00000'1010011);
+    EXPECT_EQ(i.type, Instruction::Type::FCVTLUS);
+
+    decode(i, 0b1101000'00010'00000'000'00000'1010011);
+    EXPECT_EQ(i.type, Instruction::Type::FCVTSL);
+
+    decode(i, 0b1101000'00011'00000'000'00000'1010011);
+    EXPECT_EQ(i.type, Instruction::Type::FCVTSLU);
+
+
+    decode(i, 0b0000000'00000'00000'011'00000'0000111);
+    EXPECT_EQ(i.type, Instruction::Type::FLD);
+
+    decode(i, 0b0000000'00000'00000'011'00000'0100111);
+    EXPECT_EQ(i.type, Instruction::Type::FSD);
+
+    decode(i, 0b00000'01'00000'00000'000'00000'1000011);
+    EXPECT_EQ(i.type, Instruction::Type::FMADDD);
+
+    decode(i, 0b00000'01'00000'00000'000'00000'1000111);
+    EXPECT_EQ(i.type, Instruction::Type::FMSUBD);
+
+    decode(i, 0b00000'01'00000'00000'000'00000'1001111);
+    EXPECT_EQ(i.type, Instruction::Type::FNMADDD);
+
+    decode(i, 0b00000'01'00000'00000'000'00000'1001011);
+    EXPECT_EQ(i.type, Instruction::Type::FNMSUBD);
+
+    decode(i, 0b0000001'00000'00000'000'00000'1010011);
+    EXPECT_EQ(i.type, Instruction::Type::FADDD);
+}
