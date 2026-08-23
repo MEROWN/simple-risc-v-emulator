@@ -17,22 +17,35 @@ Milestones:
    Ensure that the `VCPKG_ROOT` environment variable is defined and contains
    your vcpkg installation path.
 2. Run:
-```sh
-vcpkg install
-cmake -B ./build/ -D CMAKE_BUILD_TYPE=Release
-cmake --build ./build/ --config Release
-cmake --install ./build/ --prefix ./
-```
-1. Run the program:
-```sh
-bin/riscv-emu
-```
+   ```sh
+   cmake -B ./build/ -D CMAKE_BUILD_TYPE=Release
+   cmake --build ./build/ --config Release
+   cmake --install ./build/ --prefix ./
+   ```
+3. Run the program:
+   ```sh
+   bin/riscv-emu
+   ```
 
 ### Development setup
 
 This applies for project development only!
 
 ```sh
-cmake -B ./build/ -D CMAKE_BUILD_TYPE=Debug -D CMAKE_EXPORT_COMPILE_COMMANDS=ON
-cmake --build build
+cmake -B ./build/ -D CMAKE_BUILD_TYPE=Debug
+cmake --build ./build/
+```
+
+Then run the program in the `build` directory.
+
+### Test setup
+
+```sh
+cmake -B ./build/ -D CMAKE_BUILD_TYPE=Debug -D BUILD_TESTING=ON
+cmake --build ./build/
+```
+
+To run the tests:
+```sh
+ctest --test-dir ./build/ --output-on-failure
 ```
