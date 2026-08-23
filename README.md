@@ -32,7 +32,7 @@ Milestones:
 This applies for project development only!
 
 ```sh
-cmake -B ./build/ -D CMAKE_BUILD_TYPE=Debug
+cmake -B ./build/ -D CMAKE_BUILD_TYPE=Debug -D CMAKE_EXPORT_COMPILE_COMMANDS=ON
 cmake --build ./build/
 ```
 
@@ -41,9 +41,11 @@ Then run the program in the `build` directory.
 ### Test setup
 
 ```sh
-cmake -B ./build/ -D CMAKE_BUILD_TYPE=Debug -D BUILD_TESTING=ON
+cmake -B ./build/ -D BUILD_TESTING=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo
 cmake --build ./build/
 ```
+
+Of course, `RelWithDebInfo` is not the only configuration you can or should use.
 
 To run the tests:
 ```sh

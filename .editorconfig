@@ -10,3 +10,7 @@ insert_final_newline = true
 
 [{Makefile,*.make,*.mak,*.mk}]
 indent_style = tab
+
+[{*.yaml,*.yml}]
+indent_style = space
+indent_size = 2

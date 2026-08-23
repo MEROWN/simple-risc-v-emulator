@@ -1,0 +1,35 @@
+name: CI tests
+
+on:
+  pull_request:
+
+  push:
+    branches:
+      - main
+
+  workflow_dispatch:
+    # This is to allow running the workflow manually on github.com
+
+jobs:
+  RunTests:
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v3
+
+      - name: Install C++ build dependencies
+        uses: aminya/setup-cpp@v1.8.0
+        with:
+          compiler: llvm
+          cmake: true
+          ninja: true
+          vcpkg: true
+
+      - name: Install project dependencies and configure
+        run: cmake -B ./build/ -D BUILD_TESTING=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo
+
+      - name: Compile
+        run: cmake --build ./build/
+
+      - name: Run tests
+        run: ./build/tests
