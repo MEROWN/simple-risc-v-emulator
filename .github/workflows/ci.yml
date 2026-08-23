@@ -14,6 +14,9 @@ jobs:
   RunTests:
     runs-on: ubuntu-latest
 
+    env:
+      VCPKG_ROOT: ${{ github.workspace }}/vcpkg
+
     steps:
       - uses: actions/checkout@v3
 
