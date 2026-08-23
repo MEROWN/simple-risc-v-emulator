@@ -69,7 +69,9 @@ if(SIMPLE_RISCV_EMU_BUILD_TESTS)
 
     target_sources(tests
         PRIVATE
-            "src/tests/instruction_decoding.cpp"
+            "tests/bit_utils.cpp"
+            "tests/memory_utils.cpp"
+            "tests/instruction_decoding.cpp"
     )
 
     add_test(NAME riscv-emu-gtest-suite COMMAND tests)

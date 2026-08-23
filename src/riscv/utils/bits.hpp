@@ -47,7 +47,7 @@ static constexpr T getBits(T value, uint8_t firstBit, uint8_t lastBit)
 }
 
 /** Sign-extends a value using the specified sign bit.
-    Example: signExtend<uint8_t>(0b00010000, 4) = 0b11110000 */
+    Example: signExtend<uint8_t>(0b0001'0000, 4) = 0b1111'0000 */
 template <typename T>
 static constexpr std::make_signed_t<T> signExtend(T value, uint8_t signBit)
 {
@@ -59,7 +59,7 @@ static constexpr std::make_signed_t<T> signExtend(T value, uint8_t signBit)
 
     // This code needs static_cast and not bit_cast because S can be promoted to the possibly
     // larger int type, which may cause the shifts to not work correctly (i.e. sign-extend).
-    return static_cast<S>((static_cast<S>(value) << shiftAmount) >> shiftAmount);
+    return static_cast<S>(static_cast<S>(value << shiftAmount) >> shiftAmount);
 }
 
 
