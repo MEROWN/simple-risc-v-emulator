@@ -28,6 +28,12 @@ constexpr RegisterIndex floatRegisterCount = 32;
 
 using FloatRegister = double;
 
+/** The clock used for `time` Control Status Register. */
+using Clock = std::chrono::steady_clock;
+
+using ClockTickDuration = std::chrono::nanoseconds;
+
+
 /** Software ABI register aliases. Contains only the registers usable for the emulator. */
 enum ABIRegisterIndex : RegisterIndex
 {
@@ -136,14 +142,14 @@ public:
 
     /** This emulates the `cycle` and `instret` Control Status Registers.
         This should be incremented by 1 after each instruction is executed. */
-    uint64_t cycleCounter = 0;
+    Register cycleCounter = 0;
 
     /** This emulates the `time` Control Status Register.
+        Takes the startTime initialized by the emulator.
         Returns the elapsed time in nanoseconds. */
-    uint64_t getTime() const
+    Register getTime(Clock::time_point startTime) const
     {
-        return std::chrono::duration_cast<std::chrono::nanoseconds>(Clock::now() - startTime)
-            .count();
+        return std::chrono::duration_cast<ClockTickDuration>(Clock::now() - startTime).count();
     }
 
     Pointer getInstructionIndex() const
@@ -155,11 +161,6 @@ public:
     {
         return programCounter + 4;
     }
-
-private:
-    using Clock = std::chrono::steady_clock;
-
-    Clock::time_point startTime = Clock::now();
 };
 
 

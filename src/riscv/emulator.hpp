@@ -108,6 +108,10 @@ private:
     std::vector<Instruction> instructions {};
     std::map<uint64_t, CustomSyscallHandler> customSyscallHandlers {};
 
+    /** Start time for the emulator. Used to calculate current time in all threads. */
+    Clock::time_point startTime = Clock::now();
+
+
     void doCustomSyscall(Thread& thread, uint64_t syscallNumber)
     {
         auto it = customSyscallHandlers.find(syscallNumber);
