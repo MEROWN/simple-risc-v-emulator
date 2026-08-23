@@ -20,10 +20,10 @@ jobs:
       - name: Configure
         run: >
           cmake -B ./build/
-            -D SIMPLE_RISCV_EMU_BUILD_TESTS=ON
-            -D SIMPLE_RISCV_EMU_BUILD_APP=OFF
-            -D CMAKE_BUILD_TYPE=RelWithDebInfo
-            -D CMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
+          -D SIMPLE_RISCV_EMU_BUILD_TESTS=ON
+          -D SIMPLE_RISCV_EMU_BUILD_APP=OFF
+          -D CMAKE_BUILD_TYPE=RelWithDebInfo
+          -D CMAKE_TOOLCHAIN_FILE=$VCPKG_INSTALLATION_ROOT/scripts/buildsystems/vcpkg.cmake
 
       - name: Build
         run: cmake --build ./build/
