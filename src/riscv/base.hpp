@@ -28,6 +28,37 @@ constexpr RegisterIndex floatRegisterCount = 32;
 
 using FloatRegister = double;
 
+/** Software ABI register aliases. Contains only the registers usable for the emulator. */
+enum ABIRegisterIndex : RegisterIndex
+{
+    ReturnAddress = 1,
+    StackPointer = 2,
+    GlobalPointer = 3,
+    ThreadPointer = 4,
+
+    Argument0 = 10,
+    Argument1 = 11,
+    Argument2 = 12,
+    Argument3 = 13,
+    Argument4 = 14,
+    Argument5 = 15,
+    Argument6 = 16,
+    Argument7 = 17,
+};
+
+/** Software ABI float register aliases. Contains only the registers usable for the emulator. */
+enum class ABIFloatRegisterIndex : RegisterIndex
+{
+    Argument0 = 10,
+    Argument1 = 11,
+    Argument2 = 12,
+    Argument3 = 13,
+    Argument4 = 14,
+    Argument5 = 15,
+    Argument6 = 16,
+    Argument7 = 17,
+};
+
 
 enum class ControlStatusRegister : uint16_t
 {

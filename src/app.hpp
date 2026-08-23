@@ -9,6 +9,7 @@
 #include <SDL3/SDL_keycode.h>
 
 #include <span>
+#include <vector>
 
 
 class App
@@ -28,6 +29,10 @@ private:
 
     size_t getFramebufferSize();
     std::span<Renderer::Pixel> getFramebuffer();
+
+    /** Pressed keys are stored as SDL_Keycode codes.
+        Released keys are represented as negative values. */
+    std::vector<int32_t> keyEvents {};
 };
 
 

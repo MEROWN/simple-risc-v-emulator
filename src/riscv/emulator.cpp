@@ -18,7 +18,12 @@ Emulator::~Emulator()
 void Emulator::run(Thread& t)
 {
     // TODO(Danil) instruction execution loop
-    for (; t.getInstructionIndex() < instructions.size(); t.cycleCounter++)
+
+    // Never return/break from the execution loop because some custom logic is executed
+    // before/after every iteration. Just set shouldContinue to false.
+    bool shouldContinue = true;
+
+    for (; shouldContinue && t.getInstructionIndex() < instructions.size(); t.cycleCounter++)
     {
         Instruction instr = instructions[t.getInstructionIndex()];
 
