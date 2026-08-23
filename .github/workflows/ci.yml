@@ -10,29 +10,23 @@ on:
   workflow_dispatch:
     # This is to allow running the workflow manually on github.com
 
+
 jobs:
   RunTests:
     runs-on: ubuntu-latest
-
-    env:
-      VCPKG_ROOT: /home/runner/vcpkg
-
     steps:
-      - uses: actions/checkout@v3
 
-      - name: Install C++ build dependencies
-        uses: aminya/setup-cpp@v1.8.0
-        with:
-          compiler: llvm
-          cmake: true
-          ninja: true
-          vcpkg: true
+      - uses: actions/checkout@v3
 
       - name: Install project dependencies and configure
         run: cmake -B ./build/ -D BUILD_TESTING=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
 
       - name: Compile
         run: cmake --build ./build/
+        env:
+          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
 
       - name: Run tests
         run: ./build/tests
