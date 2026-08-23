@@ -15,18 +15,16 @@ jobs:
   RunTests:
     runs-on: ubuntu-latest
     steps:
-
       - uses: actions/checkout@v3
+
+      - name: Set VCPKG_ROOT
+        run: echo "VCPKG_ROOT=$VCPKG_INSTALLATION_ROOT" >> "$GITHUB_ENV"
 
       - name: Install project dependencies and configure
         run: cmake -B ./build/ -D BUILD_TESTING=ON -D CMAKE_BUILD_TYPE=RelWithDebInfo
-        env:
-          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
 
       - name: Compile
         run: cmake --build ./build/
-        env:
-          VCPKG_ROOT: ${{ env.VCPKG_INSTALLATION_ROOT }}
 
       - name: Run tests
         run: ./build/tests
