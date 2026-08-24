@@ -3,12 +3,11 @@
 
 
 #include <src/riscv/instruction.hpp>
+#include <src/riscv/utils/arena.hpp>
 
 #include <functional>
 #include <map>
-#include <span>
 #include <stdexcept>
-#include <vector>
 
 
 namespace riscv
@@ -32,6 +31,20 @@ using CustomSyscallHandler = std::function<CustomSyscallStatus(Thread& thread, E
     Other syscall arguments are passed in `Argument1`, `Argument2`, ... */
 enum class BuiltinSyscall : uint64_t
 {
+    /** Gets a pointer to the start of the free memory region.
+
+        Memory regions before this pointer are allocated by the host.
+        Allocating guest memory moves the free memory pointer forward, so in order for the pointer
+        to stay constant, the host should not allocate any guest memory after
+        the code execution starts.
+
+        For maximum efficiency, this internally calls `memory.getFreeAlignedOffset<uint64_t>()`
+        so that guest memory alignment matches the host alignment for all fundamental types.
+
+        Returns:
+        - Argument0: the free memory pointer */
+    GetFreeMemory,
+
     /** Efficiently copies memory from one region to another.
 
         The regions may not overlap, as in `std::memcpy()`.
@@ -41,7 +54,7 @@ enum class BuiltinSyscall : uint64_t
         - Argument1: the source pointer
         - Argument2: the destination pointer
         - Argument3: the number of bytes to copy */
-    CopyMemory = 0,
+    CopyMemory,
 
     /** Efficiently copies memory from one region to another.
 
@@ -51,7 +64,7 @@ enum class BuiltinSyscall : uint64_t
         - Argument1: the source pointer
         - Argument2: the destination pointer
         - Argument3: the number of bytes to copy */
-    CopyMemoryOverlapping = 1,
+    CopyMemoryOverlapping,
 
     /** Efficiently fills a region of memory with a given byte value.
 
@@ -61,7 +74,7 @@ enum class BuiltinSyscall : uint64_t
         - Argument1: the destination pointer
         - Argument2: the byte value to fill
         - Argument3: the number of bytes to fill */
-    FillMemory = 2,
+    FillMemory,
 
     /** Compares two regions of memory.
 
@@ -78,7 +91,7 @@ enum class BuiltinSyscall : uint64_t
 
         Returns:
         - Argument0: the result of the comparison. */
-    CompareMemory = 3,
+    CompareMemory,
 
     /** Finds the first occurrence of a byte in a memory region.
 
@@ -89,7 +102,7 @@ enum class BuiltinSyscall : uint64_t
 
         Returns:
         - Argument0: the index of the first occurrence of the byte, or -1 if not found. */
-    FindByte = 4,
+    FindByte,
 
     /** Syscall numbers less than or equal to this value are reserved for built-in syscalls. */
     Max = 127,
@@ -99,33 +112,18 @@ enum class BuiltinSyscall : uint64_t
 class Emulator
 {
 public:
-    Emulator();
+    Arena memory;
+
+    Emulator(size_t memorySizeBytes) : memory(memorySizeBytes) { };
+
     ~Emulator();
 
     void run(Thread& thread);
-
-    /** The returned span remains valid as long as the memory is not resized. */
-    std::span<uint8_t> getMemory()
-    {
-        return memory;
-    }
-
-    /** This may invalidate all previously acquired memory spans. */
-    void resizeMemory(Size newSize)
-    {
-        memory.resize(newSize);
-    }
 
     /** This moves the provided instructions into the emulator. */
     void setInstructions(std::vector<Instruction> newInstructions)
     {
         instructions = std::move(newInstructions);
-    }
-
-    /** This validates and decodes the provided program and loads it into the emulator. */
-    void loadInstructions(std::span<uint8_t const> program)
-    {
-        setInstructions(decodeInstructions(program));
     }
 
     /** Registers a custom syscall handler for the given syscall number.
@@ -145,7 +143,6 @@ public:
 
 
 private:
-    std::vector<uint8_t> memory {};
     std::vector<Instruction> instructions {};
     std::map<uint64_t, CustomSyscallHandler> customSyscallHandlers {};
 

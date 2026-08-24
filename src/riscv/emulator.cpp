@@ -7,12 +7,9 @@ namespace riscv
 {
 
 
-Emulator::Emulator()
-{
-}
-
 Emulator::~Emulator()
 {
+    // TODO emulator destructor; should this join all threads?
 }
 
 void Emulator::run(Thread& t)

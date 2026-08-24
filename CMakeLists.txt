@@ -31,6 +31,7 @@ target_sources(riscv-emu-lib
         "src/riscv/base.cpp"
         "src/riscv/instruction.cpp"
         "src/riscv/emulator.cpp"
+        "src/riscv/elf.cpp"
 )
 
 
@@ -75,4 +76,16 @@ if(SIMPLE_RISCV_EMU_BUILD_TESTS)
     )
 
     add_test(NAME riscv-emu-gtest-suite COMMAND tests)
+endif()
+
+
+if(CMAKE_BUILD_TYPE STREQUAL "Release")
+    message(STATUS "Release build: enabling link-time optimization (LTO)")
+    include(CheckIPOSupported)
+
+    set_target_properties(
+        riscv-emu-lib riscv-emu
+        PROPERTIES
+            INTERPROCEDURAL_OPTIMIZATION TRUE
+    )
 endif()

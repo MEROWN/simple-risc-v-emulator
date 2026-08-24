@@ -27,8 +27,7 @@ private:
     riscv::Thread mainThread;
     Renderer renderer;
 
-    size_t getFramebufferSize();
-    std::span<Renderer::Pixel> getFramebuffer();
+    std::span<Renderer::Pixel> framebuffer;
 
     /** Pressed keys are stored as SDL_Keycode codes.
         Released keys are represented as negative values. */
