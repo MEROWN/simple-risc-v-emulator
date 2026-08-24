@@ -12,6 +12,10 @@ enum class CustomSyscall : uint64_t
     Random = static_cast<uint64_t>(riscv::BuiltinSyscall::Max) + 1,
 
     /** Returns:
+        - Argument0: the pointer to the framebuffer */
+    GetFramebuffer,
+
+    /** Returns:
         - Argument0: the width of the framebuffer in pixels
         - Argument1: the height of the framebuffer in pixels */
     GetFramebufferSize,
@@ -22,7 +26,7 @@ enum class CustomSyscall : uint64_t
     /** Returns:
         - Argument0: next buffered key event, or 0 if none left in the buffer.
             Positive numbers provide SDL_Keycode of pressed keys.
-            Negative numbers provide SDL_Keycode of released keys. */
+            Negative numbers provide -SDL_Keycode of released keys. */
     ReadKey,
 
     // TODO(Mark) multithreading and synchronization

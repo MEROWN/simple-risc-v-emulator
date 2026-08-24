@@ -28,17 +28,30 @@ class Emulator;
 using CustomSyscallHandler = std::function<CustomSyscallStatus(Thread& thread, Emulator& emulator)>;
 
 
+/** Builtin syscalls. The syscall number is in `ABIRegisterIndex::Argument0`.
+    Other syscall arguments are passed in `Argument1`, `Argument2`, ... */
 enum class BuiltinSyscall : uint64_t
 {
     /** Efficiently copies memory from one region to another.
 
-        The source and destination regions may overlap, as in `std::memmove()`.
+        The regions may not overlap, as in `std::memcpy()`.
+        Calling this with overlapping regions is undefined behavior.
 
         Arguments:
         - Argument1: the source pointer
         - Argument2: the destination pointer
         - Argument3: the number of bytes to copy */
-    MemoryCopy = 0,
+    CopyMemory = 0,
+
+    /** Efficiently copies memory from one region to another.
+
+        The regions may overlap, as in `std::memmove()`.
+
+        Arguments:
+        - Argument1: the source pointer
+        - Argument2: the destination pointer
+        - Argument3: the number of bytes to copy */
+    CopyMemoryOverlapping = 1,
 
     /** Efficiently fills a region of memory with a given byte value.
 
@@ -48,7 +61,35 @@ enum class BuiltinSyscall : uint64_t
         - Argument1: the destination pointer
         - Argument2: the byte value to fill
         - Argument3: the number of bytes to fill */
-    MemoryFill = 1,
+    FillMemory = 2,
+
+    /** Compares two regions of memory.
+
+        This is equivalent to `std::memcmp()`.
+
+        The result is 0 if all bytes in both regions are equal.
+        The result is negative if the first differing byte is less in the first region.
+        The result is positive if the first differing byte is greater in the first region.
+
+        Arguments:
+        - Argument1: the first pointer
+        - Argument2: the second pointer
+        - Argument3: the number of bytes to compare
+
+        Returns:
+        - Argument0: the result of the comparison. */
+    CompareMemory = 3,
+
+    /** Finds the first occurrence of a byte in a memory region.
+
+        Arguments:
+        - Argument1: the pointer to the memory region
+        - Argument2: the byte to find
+        - Argument3: the number of bytes to search
+
+        Returns:
+        - Argument0: the index of the first occurrence of the byte, or -1 if not found. */
+    FindByte = 4,
 
     /** Syscall numbers less than or equal to this value are reserved for built-in syscalls. */
     Max = 127,
