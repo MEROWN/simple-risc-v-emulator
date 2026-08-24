@@ -153,7 +153,7 @@ private:
     Clock::time_point startTime = Clock::now();
 
 
-    void doCustomSyscall(Thread& thread, uint64_t syscallNumber)
+    void performCustomSyscall(Thread& thread, uint64_t syscallNumber)
     {
         auto it = customSyscallHandlers.find(syscallNumber);
         if (it != customSyscallHandlers.end())
