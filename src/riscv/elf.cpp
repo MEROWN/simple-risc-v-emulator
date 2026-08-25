@@ -246,7 +246,7 @@ static void mapDataSegments(
     }
     catch (std::bad_alloc const&)
     {
-        throw std::runtime_error { "not enough emulator memory to load ELF data segments" };
+        throw std::runtime_error { "could not allocate emulator memory to load ELF data segments" };
     }
 
     copySegments(headers, source, dataMemory);
@@ -257,13 +257,13 @@ static void mapCodeSegments(
     SortedHeaders headers, std::span<uint8_t const> source, Emulator& emulator
 )
 {
-    auto maxSegmentEnd = headers.back().destinationEnd();
+    auto totalCodeSize = headers.back().destinationEnd();
 
-    std::vector<uint8_t> code(maxSegmentEnd);
+    std::vector<uint8_t> codeMemory(totalCodeSize);
 
-    copySegments(headers, source, code);
+    copySegments(headers, source, codeMemory);
 
-    emulator.setInstructions(decodeInstructions(code));
+    emulator.setInstructions(decodeInstructions(codeMemory));
 }
 
 
