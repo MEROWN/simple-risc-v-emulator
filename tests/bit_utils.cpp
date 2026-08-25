@@ -5,7 +5,7 @@
 
 using namespace riscv;
 
-TEST(BitUtils, singleBitManipulation)
+TEST(BitUtils, SingleBitManipulation)
 {
     uint8_t value = 0b1000'0000;
     EXPECT_TRUE(hasBit(value, 7));
@@ -19,7 +19,7 @@ TEST(BitUtils, singleBitManipulation)
     EXPECT_EQ(value, 0b0000'0001);
 }
 
-TEST(BitUtils, oneBits)
+TEST(BitUtils, OneBits)
 {
     EXPECT_EQ(oneBits<uint8_t>(0), 0b0000'0000);
     EXPECT_EQ(oneBits<uint8_t>(1), 0b0000'0001);
@@ -27,7 +27,7 @@ TEST(BitUtils, oneBits)
     EXPECT_EQ(oneBits<uint8_t>(8), 0b1111'1111);
 }
 
-TEST(BitUtils, getBits)
+TEST(BitUtils, GetBits)
 {
     uint8_t value = 0b1011'0101;
     EXPECT_EQ(getBits(value, 0, 3), 0b0101);
@@ -35,7 +35,7 @@ TEST(BitUtils, getBits)
     EXPECT_EQ(getBits(value, 2, 5), 0b1101);
 }
 
-TEST(BitUtils, signExtend)
+TEST(BitUtils, SignExtend)
 {
     EXPECT_EQ(signExtend<uint8_t>(0b0001'0101, 4), (int8_t) 0b1111'0101);
     EXPECT_EQ(signExtend<uint8_t>(0b0110'0101, 4), (int8_t) 0b0000'0101);

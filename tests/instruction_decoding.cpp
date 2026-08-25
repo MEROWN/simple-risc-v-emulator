@@ -20,13 +20,13 @@ static void decode(Instruction& outInstruction, uint32_t nativeEncoded)
 }
 
 
-TEST(InstructionDecoding, smokeTest)
+TEST(InstructionDecoding, SmokeTest)
 {
     auto instructions = decodeInstructions(Prog {});
     EXPECT_EQ(instructions.size(), 0);
 }
 
-TEST(InstructionDecoding, invalidLength)
+TEST(InstructionDecoding, InvalidLength)
 {
     EXPECT_ANY_THROW(decodeInstructions(Prog { { 0 } }));
     EXPECT_ANY_THROW(decodeInstructions(Prog { { 0, 0 } }));
@@ -34,14 +34,14 @@ TEST(InstructionDecoding, invalidLength)
     EXPECT_ANY_THROW(decodeInstructions(Prog { { 0, 0, 0, 0, 0 } }));
 }
 
-TEST(InstructionDecoding, unsupportedCompressedInstructions)
+TEST(InstructionDecoding, UnsupportedCompressedInstructions)
 {
     EXPECT_ANY_THROW(decodeInstructions(Prog { { 0b01, 0, 0, 0 } }));
     EXPECT_ANY_THROW(decodeInstructions(Prog { { 0b10, 0, 0, 0 } }));
     EXPECT_ANY_THROW(decodeInstructions(Prog { { 0b00, 0, 0, 0 } }));
 }
 
-TEST(InstructionDecoding, instructionFormats)
+TEST(InstructionDecoding, InstructionFormats)
 {
     Instruction i;
 
@@ -110,7 +110,7 @@ TEST(InstructionDecoding, instructionFormats)
     EXPECT_EQ(i.immediate, 0b0'1);
 }
 
-TEST(InstructionDecoding, basicInstructions)
+TEST(InstructionDecoding, BasicInstructions)
 {
     Instruction i;
 
@@ -187,7 +187,7 @@ TEST(InstructionDecoding, basicInstructions)
     EXPECT_EQ(i.type, Instruction::Type::SRAW);
 }
 
-TEST(InstructionDecoding, multiplyExtension)
+TEST(InstructionDecoding, MultiplyExtension)
 {
     Instruction i;
 
@@ -216,7 +216,7 @@ TEST(InstructionDecoding, multiplyExtension)
     EXPECT_EQ(i.type, Instruction::Type::DIVW);
 }
 
-TEST(InstructionDecoding, fenceInstructions)
+TEST(InstructionDecoding, FenceInstructions)
 {
     Instruction i;
 
@@ -233,7 +233,7 @@ TEST(InstructionDecoding, fenceInstructions)
     EXPECT_EQ(i.type, Instruction::Type::FENCEI);
 }
 
-TEST(InstructionDecoding, systemInstructions)
+TEST(InstructionDecoding, SystemInstructions)
 {
     Instruction i;
 
@@ -250,7 +250,7 @@ TEST(InstructionDecoding, systemInstructions)
     EXPECT_EQ(i.type, Instruction::Type::CSRRCI);
 }
 
-TEST(InstructionDecoding, atomicInstructions)
+TEST(InstructionDecoding, AtomicInstructions)
 {
     Instruction i;
 
@@ -261,7 +261,7 @@ TEST(InstructionDecoding, atomicInstructions)
     EXPECT_EQ(i.type, Instruction::Type::LRD);
 }
 
-TEST(InstructionDecoding, floatingPointInstructions)
+TEST(InstructionDecoding, FloatingPointInstructions)
 {
     Instruction i;
 

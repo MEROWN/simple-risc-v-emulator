@@ -6,7 +6,7 @@
 using namespace riscv;
 
 
-TEST(MemoryUtils, memoryRead)
+TEST(MemoryUtils, MemoryRead)
 {
     uint8_t buffer[] = { 0xEF, 0xCD, 0xAB, 0x89, 0x67, 0x45, 0x23, 0x01 };
 
@@ -20,7 +20,7 @@ TEST(MemoryUtils, memoryRead)
     EXPECT_EQ(value64, 0x0123456789ABCDEF);
 }
 
-TEST(MemoryUtils, memoryWrite)
+TEST(MemoryUtils, MemoryWrite)
 {
     uint8_t buffer[8] = { 0 };
 
