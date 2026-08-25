@@ -1,4 +1,4 @@
-#include <src/app.hpp>
+#include "app.hpp"
 
 #include <src/options.hpp>
 #include <src/riscv/elf.hpp>
@@ -57,9 +57,16 @@ App::App(std::span<char *> args)
     auto const programData = readProgramFile(options.programPath);
     riscv::loadElf(programData, emulator);
 
-    framebuffer = emulator.memory.allocate<Renderer::Pixel[]>(
-        (size_t) options.framebufferWidth * options.framebufferHeight
-    );
+    try
+    {
+        framebuffer = emulator.memory.allocate<Renderer::Pixel[]>(
+            (size_t) options.framebufferWidth * options.framebufferHeight
+        );
+    }
+    catch (std::bad_alloc const&)
+    {
+        throw std::runtime_error { "not enough emulator memory to allocate framebuffer" };
+    }
 
     // TODO Register custom syscalls
 

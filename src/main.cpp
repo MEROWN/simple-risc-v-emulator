@@ -33,7 +33,15 @@ SDL_AppResult SDL_AppInit(void **, int argc, char **argv)
 
 SDL_AppResult SDL_AppIterate(void *)
 {
-    app->tick();
+    try
+    {
+        app->tick();
+    }
+    catch (std::exception const& e)
+    {
+        std::cerr << "Error during emulation: " << e.what() << std::endl;
+        return SDL_APP_FAILURE;
+    }
 
     return SDL_APP_CONTINUE;
 }

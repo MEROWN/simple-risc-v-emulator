@@ -1,4 +1,4 @@
-#include <src/riscv/instruction.hpp>
+#include "instruction.hpp"
 
 #include <src/riscv/utils/bits.hpp>
 #include <src/riscv/utils/memory.hpp>

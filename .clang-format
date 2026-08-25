@@ -71,3 +71,21 @@ AllowAllArgumentsOnNextLine: true
 
 ReferenceAlignment: Left
 AccessModifierOffset: -4
+
+
+IncludeBlocks: Regroup
+IncludeCategories:
+    # Implicit priority of 0 is reserved for the main ("quoted") header
+
+    # Project headers
+    -   Regex: '^<src/'
+        Priority: 30
+
+    # Standard headers
+    -   Regex: '^<[a-z]+>'
+        Priority: 100
+        CaseSensitive: true
+
+    # Dependencies
+    -   Regex: '^.*'
+        Priority: 90

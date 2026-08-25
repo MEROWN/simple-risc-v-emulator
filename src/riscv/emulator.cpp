@@ -1,4 +1,4 @@
-#include <src/riscv/emulator.hpp>
+#include "emulator.hpp"
 
 #include <stdexcept>
 
