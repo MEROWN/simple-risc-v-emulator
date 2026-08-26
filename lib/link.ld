@@ -5,7 +5,8 @@
 ENTRY(0)
 
 SECTIONS {
-    . = 0; /* Code address space */
+    /* Code address space */
+    . = 0;
 
     .init : {
         /* The execution starts here */
@@ -21,31 +22,19 @@ SECTIONS {
         *(.fini.*)
     }
 
-    . = 0; /* Data address space */
+    /* Data address space */
+    . = 8; /* Not 0 to avoid problems with NULL/nullptr in C/C++ */
 
-    /* Small data sections */
-    .sdata : {
-        __global_pointer$ = . + 0x800;
-        *(.sdata*)
+    /* The emulator does not enforce read-only memory access, so we place
+        all read-only sections at the beginning of the data address space
+        in hope that it will lower the risk of accidental modification. */
+    .rodata : {
+        *(.rodata*)
     }
     .srodata : {
         *(.srodata*)
     }
-    .sbss : {
-        *(.sbss*)
-    }
-    /* Normal data sections */
-    .rodata : {
-        *(.rodata*)
-    }
-    .data : {
-        *(.data*)
-    }
-    .bss : {
-        *(.bss*)
-        *(COMMON)
-    }
-    /* Arrays of function pointers that might require calling before main() */
+    /* Arrays of function pointers that must be called before main() */
     .preinit_array : {
         __elf_preinit_array_start = .;
         *(.preinit_array)
@@ -57,5 +46,29 @@ SECTIONS {
         *(.init_array)
         *(.init_array.*)
         __elf_init_array_end = .;
+    }
+
+    .data : {
+        *(.data*)
+    }
+
+    /* Small data sections that can be addressed relative to the value
+        in the Global Pointer (GP) register with a small 12-bit offset
+        (from -0x800 to 0x7ff) */
+    .sdata : {
+        /* The GP-addressable space is .sdata[0x000...0xfff] */
+        __global_pointer$ = . + 0x800;
+
+        *(.sdata*)
+    }
+    /* If .sdata is smaller than 4KiB, some part of .sbss can also be
+        GP-addressable */
+    .sbss : {
+        *(.sbss*)
+    }
+
+    .bss : {
+        *(.bss*)
+        *(COMMON)
     }
 }

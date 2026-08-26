@@ -16,14 +16,13 @@ void Emulator::run(Thread& t)
 {
     // TODO(Danil) instruction execution loop
 
-    // Never return/break from the execution loop because some custom logic is executed
-    // before/after every iteration. Just set shouldContinue to false.
-    bool shouldContinue = true;
-
-    for (; shouldContinue && t.getInstructionIndex() < instructions.size(); t.cycleCounter++)
+    for (; t.getInstructionIndex() < instructions.size();
+         t.programCounter = t.getNextProgramCounter())
     {
-        Instruction instr = instructions[t.getInstructionIndex()];
+        // No one actually cares when this is incremented, so do this before executing instructions
+        t.cycleCounter++;
 
+        Instruction instr = instructions[t.getInstructionIndex()];
         switch (instr.type)
         {
         case Instruction::Type::LUI:
@@ -100,8 +99,6 @@ void Emulator::run(Thread& t)
         default:
             throw std::runtime_error("Unsupported instruction");
         }
-
-        t.programCounter = t.getNextProgramCounter();
     }
 }
 

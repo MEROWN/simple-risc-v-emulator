@@ -7,9 +7,10 @@ Features:
 - keyboard input
 - simple and portable
 
-This is a hobby project involving modern C++20, multi-threaded programming,
-custom allocators, OOP, testing with Google Test, CMake,
-vcpkg package management, and GitHub Actions CI.
+This is a hobby project involving modern C++20, OOP, multi-threaded programming,
+custom allocators, custom linker scripts, bare-metal programming,
+CMake, vcpkg package management,
+testing with Google Test, and GitHub Actions CI.
 
 Milestones:
 - [X] Graphical output using a framebuffer mapped into the emulator memory
