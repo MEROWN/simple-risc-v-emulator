@@ -51,8 +51,10 @@ struct ElfHeader
     uint8_t elfClass = 0;
     uint8_t data = 0;
     uint8_t version = 0;
+    uint8_t osABI = 0;
     uint16_t type = 0;
     uint16_t machine = 0;
+    uint64_t entry = 0;
     uint64_t programHeaderOffset = 0;
     uint16_t programHeaderEntrySize = 0;
     uint16_t programHeaderEntryCount = 0;
@@ -63,8 +65,10 @@ struct ElfHeader
         elfClass = getU8(source, 4);
         data = getU8(source, 5);
         version = getU8(source, 6);
+        osABI = getU8(source, 7);
         type = getU16(source, 16);
         machine = getU16(source, 18);
+        entry = getU64(source, 24);
         programHeaderOffset = getU64(source, 32);
         programHeaderEntrySize = getU16(source, 54);
         programHeaderEntryCount = getU16(source, 56);
@@ -77,17 +81,25 @@ private:
     static constexpr uint8_t elfClass64 = 2;
     static constexpr uint8_t elfDataLittleEndian = 1;
     static constexpr uint8_t elfVersion1 = 1;
+    static constexpr uint8_t osABISystemV = 0;
     static constexpr uint8_t elfTypeExecutable = 2;
     static constexpr uint16_t elfMachineRISCV = 243;
+    static constexpr uint64_t entrypointStart = 0;
     static constexpr uint16_t elfProgramHeaderEntrySize64 = 56;
 
     void validate(std::span<uint8_t const> source) const
     {
         if (!(magic == elfMagic && elfClass == elfClass64 && data == elfDataLittleEndian
-              && version == elfVersion1 && type == elfTypeExecutable && machine == elfMachineRISCV
+              && version == elfVersion1 && osABI == osABISystemV && type == elfTypeExecutable
+              && machine == elfMachineRISCV
               && programHeaderEntrySize == elfProgramHeaderEntrySize64))
         {
             throw std::runtime_error { "invalid ELF executable header" };
+        }
+
+        if (entry != entrypointStart)
+        {
+            throw std::runtime_error { "ELF executable entry point must be 0" };
         }
 
         if (programHeaderOffset + (size_t) programHeaderEntryCount * programHeaderEntrySize

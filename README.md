@@ -1,7 +1,11 @@
 # Simple 64-bit RISC-V Emulator
 
-A feature-complete RISC-V RV64G emulator that supports graphical output
-through an in-memory framebuffer and keyboard input.
+Features:
+- full RV64G architecture
+- ELF executable loading (without thread-local storage sections)
+- graphical output through an in-memory framebuffer
+- keyboard input
+- simple and portable
 
 This is a hobby project involving modern C++20, multi-threaded programming,
 custom allocators, OOP, testing with Google Test, CMake,
@@ -10,10 +14,11 @@ vcpkg package management, and GitHub Actions CI.
 Milestones:
 - [X] Graphical output using a framebuffer mapped into the emulator memory
 - [X] Instruction decoding
-- [ ] ELF executable decoding
+- [X] ELF executable decoding
 - [ ] `I`, `M`: basic integer arithmetic and multiplication instruction support
 - [ ] `F`, `D`: float and double support
 - [ ] `A`: atomic instruction support
+- [ ] Syscalls
 - [ ] Run DOOM on this
 
 ## Build & run
