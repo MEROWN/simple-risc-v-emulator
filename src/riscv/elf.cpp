@@ -12,39 +12,6 @@ namespace riscv
 {
 
 
-static uint8_t getU8(std::span<uint8_t const> source, size_t offset)
-{
-    if (offset >= source.size())
-        throw std::runtime_error { "ELF file too small or invalid" };
-
-    return source[offset];
-}
-
-static uint16_t getU16(std::span<uint8_t const> source, size_t offset)
-{
-    if (offset + 1 >= source.size())
-        throw std::runtime_error { "ELF file too small or invalid" };
-
-    return loadU16(source.data() + offset);
-}
-
-static uint32_t getU32(std::span<uint8_t const> source, size_t offset)
-{
-    if (offset + 3 >= source.size())
-        throw std::runtime_error { "ELF file too small or invalid" };
-
-    return loadU32(source.data() + offset);
-}
-
-static uint64_t getU64(std::span<uint8_t const> source, size_t offset)
-{
-    if (offset + 7 >= source.size())
-        throw std::runtime_error { "ELF file too small or invalid" };
-
-    return loadU64(source.data() + offset);
-}
-
-
 struct ElfHeader
 {
     uint32_t magic = 0;
@@ -61,22 +28,29 @@ struct ElfHeader
 
     void read(std::span<uint8_t const> source)
     {
-        magic = getU32(source, 0);
-        elfClass = getU8(source, 4);
-        data = getU8(source, 5);
-        version = getU8(source, 6);
-        osABI = getU8(source, 7);
-        type = getU16(source, 16);
-        machine = getU16(source, 18);
-        entry = getU64(source, 24);
-        programHeaderOffset = getU64(source, 32);
-        programHeaderEntrySize = getU16(source, 54);
-        programHeaderEntryCount = getU16(source, 56);
+        if (source.size() < elfHeaderSize)
+            throw std::runtime_error { "ELF file too small" };
+
+        auto header = source.data();
+
+        magic = loadU32(header + 0);
+        elfClass = *(header + 4);
+        data = *(header + 5);
+        version = *(header + 6);
+        osABI = *(header + 7);
+        type = loadU16(header + 16);
+        machine = loadU16(header + 18);
+        entry = loadU64(header + 24);
+        programHeaderOffset = loadU64(header + 32);
+        programHeaderEntrySize = loadU16(header + 54);
+        programHeaderEntryCount = loadU16(header + 56);
 
         validate(source);
     }
 
 private:
+    static constexpr size_t elfHeaderSize = 64;
+
     static constexpr uint32_t elfMagic = 0x464c457f; // "\x7fELF", little-endian
     static constexpr uint8_t elfClass64 = 2;
     static constexpr uint8_t elfDataLittleEndian = 1;
@@ -135,12 +109,14 @@ struct SegmentHeader
 
     void read(std::span<uint8_t const> source, size_t offset)
     {
-        type = getU32(source, offset + 0);
-        flags = getU32(source, offset + 4);
-        sourceStart = getU64(source, offset + 8);
-        destinationStart = getU64(source, offset + 16);
-        sourceSize = getU64(source, offset + 32);
-        destinationSize = getU64(source, offset + 40);
+        auto header = source.data() + offset;
+
+        type = loadU32(header + 0);
+        flags = loadU32(header + 4);
+        sourceStart = loadU64(header + 8);
+        destinationStart = loadU64(header + 16);
+        sourceSize = loadU64(header + 32);
+        destinationSize = loadU64(header + 40);
     }
 };
 
@@ -216,7 +192,7 @@ static void validateCodeHeaders(SortedHeaders headers)
 
     if (headers[0].destinationStart != 0)
         throw std::runtime_error {
-            "ELF code segments must be placed in memory starting at offset 0"
+            "ELF code segments must be placed into memory starting at offset 0"
         };
 
     for (size_t i = 0, next = 1; next < headers.size(); i++, next++)
